@@ -1,17 +1,16 @@
 <script>
-  import "bootstrap/dist/css/bootstrap.min.css";
+  import "./globals.css"
 </script>
+
+<svelte:head>
+    <title>Stats | Math Game</title>
+</svelte:head>
+
 
 <div class="app">
   <main>
     <slot />
   </main>
-
-  <footer>
-    <p>
-      visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to learn SvelteKit
-    </p>
-  </footer>
 </div>
 
 <style>
@@ -25,18 +24,14 @@
     flex: 1;
     display: flex;
     flex-direction: column;
+
     padding: 1rem;
     width: 100%;
+    height: 100%;
+    
     max-width: 64rem;
     margin: 0 auto;
     box-sizing: border-box;
   }
 
-  footer {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 12px;
-  }
 </style>

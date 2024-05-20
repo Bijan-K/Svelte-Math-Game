@@ -1,1 +1,1 @@
-<h2 class="">ABout</h2>
+<h2 class="">About</h2>
