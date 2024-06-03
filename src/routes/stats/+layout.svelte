@@ -1,3 +1,3 @@
 <svelte:head>
-    <title>Math Game | Stats</title>
+	<title>Stats | Math Game</title>
 </svelte:head>
