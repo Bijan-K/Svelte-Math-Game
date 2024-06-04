@@ -1,10 +1,11 @@
 <script>
+	import Aside from '../lib/Aside/Aside.svelte';
 	import './globals.css';
 </script>
 
 <div class="app">
 	<main>
-		<aside></aside>
+		<Aside />
 		<slot />
 	</main>
 </div>
@@ -21,12 +22,10 @@
 		display: flex;
 		flex-direction: column;
 
-		padding: 1rem;
 		width: 100%;
 		height: 100%;
 
 		max-width: 64rem;
-		margin: 0 auto;
 		box-sizing: border-box;
 	}
 </style>

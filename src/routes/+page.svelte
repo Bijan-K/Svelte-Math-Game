@@ -1,13 +1,15 @@
 <script>
 	import { fade, fly } from 'svelte/transition';
+	import { mode } from '$lib/stores.js';
+
 	let showOverlay = true;
 
-	function playHandler() {
+	function playHandler(e, e2) {
+		e.preventDefault();
 		showOverlay = !showOverlay;
-		document.querySelector('.block1').classList.add('.t-block1');
-		document.querySelector('.block2').classList.add('.t-block2');
-		document.querySelector('.block3').classList.add('.t-block3');
-		document.querySelector('.block4').classList.add('.t-block4');
+		console.log(e);
+		console.log(e2);
+		// mode.update((n) => (n = form));
 	}
 </script>
 
@@ -16,6 +18,12 @@
 </svelte:head>
 
 <div class="container">
+	<!-- Play -->
+
+	<!-- Stats -->
+	<!-- About -->
+
+	<!-- initial overlay -->
 	{#if showOverlay}
 		<div class="block-container">
 			<div out:fly={{ x: -500, duration: 4000 }} class="block3"></div>
@@ -31,8 +39,8 @@
 			<div class="overlay-btn-container">
 				<button on:click={playHandler} class="playbtn">Play</button>
 				<!-- data-sveltekit-reload -->
-				<a class="linkbtn" href="/stats">Stats</a>
-				<a class="linkbtn" href="/about">About</a>
+				<button on:click={playHandler} class="playbtn" href="/">Stats</button>
+				<button on:click={playHandler} class="playbtn" href="/">About</button>
 			</div>
 		</div>
 	{/if}
@@ -41,7 +49,8 @@
 <style>
 	.container {
 		height: 100%;
-		width: 100%;
+
+		width: 100vw;
 		display: flex;
 		flex-grow: 1;
 		gap: 2rem;
@@ -135,14 +144,6 @@
 		color: #111;
 		border-radius: 0.2rem;
 		font-size: larger;
-	}
-	.linkbtn {
-		padding: 0.5rem;
-		border: none;
-		background-color: white;
-		text-decoration: none;
-		color: #111;
-		border-radius: 0.2rem;
-		font-size: larger;
+		cursor: pointer;
 	}
 </style>
