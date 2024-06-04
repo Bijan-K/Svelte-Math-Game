@@ -1,55 +1,16 @@
 <script>
-	import { fade, fly } from 'svelte/transition';
-	import { page } from '$app/stores';
-	let mode = true;
+	import { fade, fly, slide } from 'svelte/transition';
+	import { modeState } from '$lib/stores.js';
 </script>
 
-{#if mode == 'play' || mode == 'about' || mode == 'stats'}
-	<aside in:fly>
-		{#if mode == 'play'}
-			<ul>
-				<li>
-					<a href="/">play</a>
-				</li>
-				<li>
-					<a href="/about">About</a>
-				</li>
-
-				<li>
-					<a href="/stats">Stats</a>
-				</li>
-				<li></li>
-			</ul>
+{#if $modeState == 'play' || $modeState == 'about' || $modeState == 'stats'}
+	<aside in:slide={{ axis: 'x', duration: 2000, delay: 2000 }}>
+		<div>Page:</div>
+		{#if $modeState == 'play'}
 			<div></div>
-		{:else if mode == 'stats'}
-			<ul>
-				<li>
-					<a href="/">play</a>
-				</li>
-				<li>
-					<a href="/about">About</a>
-				</li>
-
-				<li>
-					<a href="/stats">Stats</a>
-				</li>
-				<li></li>
-			</ul>
+		{:else if $modeState == 'stats'}
 			<div></div>
-		{:else if mode == 'about'}
-			<ul>
-				<li>
-					<a href="/">play</a>
-				</li>
-				<li>
-					<a href="/about">About</a>
-				</li>
-
-				<li>
-					<a href="/stats">Stats</a>
-				</li>
-				<li></li>
-			</ul>
+		{:else if $modeState == 'about'}
 			<div></div>
 		{/if}
 	</aside>
@@ -59,7 +20,7 @@
 	aside {
 		height: 100vh;
 		border-right: 1px solid #eee;
-		width: 20%;
+		width: 30%;
 		position: relative;
 		left: 0;
 		top: 0;

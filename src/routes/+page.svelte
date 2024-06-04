@@ -1,15 +1,13 @@
 <script>
 	import { fade, fly } from 'svelte/transition';
-	import { mode } from '$lib/stores.js';
+	import { modeState } from '$lib/stores.js';
 
 	let showOverlay = true;
 
 	function playHandler(e, e2) {
 		e.preventDefault();
 		showOverlay = !showOverlay;
-		console.log(e);
-		console.log(e2);
-		// mode.update((n) => (n = form));
+		modeState.update((n) => e.target.id);
 	}
 </script>
 
@@ -34,13 +32,13 @@
 
 		<div out:fade class="overlay-container">
 			<h1>Quick Maths Game</h1>
-			<p>A simple webapp for practicing mental quick maths</p>
+			<p>A simple webapp for practicing mental quick math</p>
 
 			<div class="overlay-btn-container">
-				<button on:click={playHandler} class="playbtn">Play</button>
+				<button id="play" on:click={playHandler} class="playbtn">Play</button>
 				<!-- data-sveltekit-reload -->
-				<button on:click={playHandler} class="playbtn" href="/">Stats</button>
-				<button on:click={playHandler} class="playbtn" href="/">About</button>
+				<button id="stats" on:click={playHandler} class="playbtn" href="/">Stats</button>
+				<button id="about" on:click={playHandler} class="playbtn" href="/">About</button>
 			</div>
 		</div>
 	{/if}
@@ -60,6 +58,7 @@
 	}
 
 	.overlay-container {
+		margin: 0 5%;
 		display: flex;
 		flex-direction: column;
 		gap: 2rem;
@@ -93,6 +92,7 @@
 
 	.block3 {
 		position: fixed;
+		top: 0;
 		height: 100vh;
 		width: 100vw;
 		background-color: #111;
@@ -113,6 +113,7 @@
 	}
 
 	.block4 {
+		top: 0;
 		position: fixed;
 		height: 100vh;
 		width: 100vw;
