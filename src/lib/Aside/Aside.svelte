@@ -4,14 +4,23 @@
 </script>
 
 {#if $modeState == 'play' || $modeState == 'about' || $modeState == 'stats'}
-	<aside in:slide={{ axis: 'x', duration: 2000, delay: 2000 }}>
+	<aside in:fade={{ duration: 2000, delay: 2000 }}>
 		<div>Page:</div>
+
+		<button>Play</button>
+		<button>Stats</button>
+		<button>About</button>
+
 		{#if $modeState == 'play'}
-			<div></div>
+			<div>
+				Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus quisquam dolorum cumque
+				sequi animi voluptas ea accusamus consequatur, explicabo inventore suscipit sit ad dolores
+				doloremque eveniet distinctio rem. Voluptatum, omnis.
+			</div>
 		{:else if $modeState == 'stats'}
-			<div></div>
+			<div>No loerm</div>
 		{:else if $modeState == 'about'}
-			<div></div>
+			<div>ahahahahahah</div>
 		{/if}
 	</aside>
 {/if}
@@ -20,7 +29,7 @@
 	aside {
 		height: 100vh;
 		border-right: 1px solid #eee;
-		width: 30%;
+		width: 20vw;
 		position: relative;
 		left: 0;
 		top: 0;
