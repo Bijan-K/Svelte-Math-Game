@@ -1,21 +1,30 @@
 <script>
 	import './globals.css';
-	let showOverlay = true;
+
 	import { fade, fly } from 'svelte/transition';
-	import { modeState } from '$lib/stores.js';
+	import { modeState, showOverlay } from '$lib/stores.js';
+	import TagCloud from '../lib/TagCloud.svelte';
+	import TypewriterOverlay from '../lib/TypewriterOverlay.svelte';
+
 	function playHandler(e, e2) {
 		e.preventDefault();
-		showOverlay = !showOverlay;
+		showOverlay.set(false);
 		modeState.update((n) => e.target.id);
 	}
 </script>
 
 <div class="app">
 	<main>
+		<TagCloud />
+
+		{#if $showOverlay}
+			<TypewriterOverlay />
+		{/if}
+
 		<slot />
 
 		<!-- initial overlay -->
-		{#if showOverlay}
+		{#if $showOverlay}
 			<div class="block-container">
 				<div out:fly={{ x: -500, duration: 4000 }} class="block3"></div>
 				<div out:fly={{ x: 500, duration: 4000 }} class="block4"></div>
@@ -67,7 +76,7 @@
 		gap: 2rem;
 		justify-content: center;
 		align-items: center;
-		z-index: 3;
+		z-index: 55;
 	}
 	.overlay-container h1 {
 		font-size: 4rem;
@@ -76,20 +85,20 @@
 		position: fixed;
 		height: 100vh;
 		width: 100vw;
-		z-index: 2;
+		z-index: 20;
 	}
 	.block1 {
 		position: fixed;
 		height: 100vh;
 		width: 100vw;
-		background-color: #111;
+		background-color: #0a0a0a;
 		top: -50%;
 	}
 	.block2 {
 		position: fixed;
 		height: 100vh;
 		width: 100vw;
-		background-color: #111;
+		background-color: #0a0a0a;
 		top: 50%;
 	}
 
@@ -98,7 +107,7 @@
 		top: 0;
 		height: 100vh;
 		width: 100vw;
-		background-color: #111;
+		background-color: #0a0a0a;
 		right: 50%;
 	}
 	.block3::before {
@@ -120,7 +129,7 @@
 		position: fixed;
 		height: 100vh;
 		width: 100vw;
-		background-color: #111;
+		background-color: #0a0a0a;
 		left: +50%;
 	}
 	.block4::before {
@@ -140,12 +149,13 @@
 	.overlay-btn-container {
 		display: flex;
 		gap: 0.75rem;
+		z-index: 55;
 	}
 	.playbtn {
 		padding: 0.5rem;
 		border: none;
 		background-color: white;
-		color: #111;
+		color: #0a0a0a;
 		border-radius: 0.2rem;
 		font-size: larger;
 		cursor: pointer;

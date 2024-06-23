@@ -1,27 +1,32 @@
 <script>
 	import { fade, fly, slide } from 'svelte/transition';
 	import { modeState } from '$lib/stores.js';
+	import PlayAside from './PlayAside.svelte';
+	import StatsAside from './StatsAside.svelte';
+	import AboutAside from '$lib/Aside/AboutAside.svelte';
+
+	$: console.log($modeState);
 </script>
 
 {#if $modeState == 'play' || $modeState == 'about' || $modeState == 'stats'}
-	<aside in:fade={{ duration: 2000, delay: 2000 }}>
-		<div>Page:</div>
+	<aside in:fade={{ duration: 2000 }}>
+		<div in:fade={{ duration: 500, delay: 4000 }}>
+			{#if $modeState == 'play'}
+				<PlayAside />
+			{:else if $modeState == 'stats'}
+				<StatsAside />
+			{:else if $modeState == 'about'}
+				<AboutAside />
+			{/if}
 
-		<button>Play</button>
-		<button>Stats</button>
-		<button>About</button>
+			<div class="setting">
+				<div>Page:</div>
 
-		{#if $modeState == 'play'}
-			<div>
-				Lorem ipsum dolor sit amet consectetur adipisicing elit. Possimus quisquam dolorum cumque
-				sequi animi voluptas ea accusamus consequatur, explicabo inventore suscipit sit ad dolores
-				doloremque eveniet distinctio rem. Voluptatum, omnis.
+				<button>Play</button>
+				<button>Stats</button>
+				<button>About</button>
 			</div>
-		{:else if $modeState == 'stats'}
-			<div>No loerm</div>
-		{:else if $modeState == 'about'}
-			<div>ahahahahahah</div>
-		{/if}
+		</div>
 	</aside>
 {/if}
 
@@ -34,5 +39,9 @@
 		left: 0;
 		top: 0;
 		background-color: #000;
+
+		z-index: 3;
+	}
+	.setting {
 	}
 </style>

@@ -6,6 +6,7 @@
 
 <style>
 	.counter-container {
+		border-top: 1px #eee solid;
 		width: 80vw;
 		height: 12vh;
 		position: absolute;
