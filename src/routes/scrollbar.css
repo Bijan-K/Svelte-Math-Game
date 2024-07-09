@@ -1,0 +1,19 @@
+:root {
+	::-webkit-scrollbar {
+		width: 8px;
+		height: 10px;
+		border-radius: 10px;
+	}
+
+	::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	::-webkit-scrollbar-thumb {
+		background: #88888872;
+	}
+
+	::-webkit-scrollbar-thumb:hover {
+		background: #ffffff48;
+	}
+}

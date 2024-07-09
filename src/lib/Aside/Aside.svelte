@@ -1,16 +1,26 @@
 <script>
-	import { fade, fly, slide } from 'svelte/transition';
+	import { fade } from 'svelte/transition';
 	import { modeState } from '$lib/stores.js';
-	import PlayAside from './PlayAside.svelte';
-	import StatsAside from './StatsAside.svelte';
-	import AboutAside from '$lib/Aside/AboutAside.svelte';
+	import PlayAside from './Components/PlayAside.svelte';
+	import StatsAside from './Components/StatsAside.svelte';
+	import AboutAside from './Components/AboutAside.svelte';
+	import MinusIcon from '../Icons/MinusIcon.svelte';
+	import AddIcon from '../Icons/AddIcon.svelte';
+	import AsideSetting from './AsideSetting.svelte';
 
 	$: console.log($modeState);
 </script>
 
 {#if $modeState == 'play' || $modeState == 'about' || $modeState == 'stats'}
-	<aside in:fade={{ duration: 2000 }}>
-		<div in:fade={{ duration: 500, delay: 4000 }}>
+	<div class="aside">
+		<div in:fade={{ duration: 200, delay: 1500 }}>
+			<h2>
+				<MinusIcon />
+
+				Quick Math
+				<AddIcon />
+			</h2>
+
 			{#if $modeState == 'play'}
 				<PlayAside />
 			{:else if $modeState == 'stats'}
@@ -19,29 +29,27 @@
 				<AboutAside />
 			{/if}
 
-			<div class="setting">
-				<div>Page:</div>
-
-				<button>Play</button>
-				<button>Stats</button>
-				<button>About</button>
-			</div>
+			<AsideSetting />
 		</div>
-	</aside>
+	</div>
 {/if}
 
 <style>
-	aside {
+	.aside {
 		height: 100vh;
 		border-right: 1px solid #eee;
 		width: 20vw;
 		position: relative;
 		left: 0;
 		top: 0;
-		background-color: #000;
+		background-color: transparent;
 
 		z-index: 3;
 	}
-	.setting {
+
+	h2 {
+		text-align: center;
+		font-size: 2rem;
+		padding: 0.5rem;
 	}
 </style>

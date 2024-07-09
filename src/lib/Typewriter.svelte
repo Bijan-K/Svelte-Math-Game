@@ -26,6 +26,7 @@
 	div {
 		background-color: transparent;
 		color: #eee;
+		opacity: 1;
 		font-size: larger;
 	}
 </style>

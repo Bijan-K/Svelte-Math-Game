@@ -16,6 +16,7 @@
 		justify-content: center;
 		align-items: center;
 		background-color: black;
+		z-index: 3;
 	}
 	.counter {
 		border-bottom: solid #eee 2px;

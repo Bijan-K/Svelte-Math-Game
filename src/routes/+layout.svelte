@@ -1,5 +1,6 @@
 <script>
 	import './globals.css';
+	import './scrollbar.css';
 
 	import { fade, fly } from 'svelte/transition';
 	import { modeState, showOverlay } from '$lib/stores.js';
@@ -80,6 +81,10 @@
 	}
 	.overlay-container h1 {
 		font-size: 4rem;
+	}
+
+	.overlay-container p {
+		font-size: 1.5rem;
 	}
 	.block-container {
 		position: fixed;

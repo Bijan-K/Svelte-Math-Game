@@ -85,6 +85,7 @@
 		justify-content: center;
 		align-items: center;
 		z-index: 2;
+		opacity: 0.7;
 	}
 
 	.unselectable {

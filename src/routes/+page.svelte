@@ -1,33 +1,29 @@
 <script>
-	import Aside from '../lib/Aside/Aside.svelte';
+	import Aside from '$lib/Aside/Aside.svelte';
 	import { fade, fly } from 'svelte/transition';
 	import { modeState } from '$lib/stores.js';
-	import Counter from '../lib/Counter.svelte';
+	import Counter from '$lib/PlayMode/Counter.svelte';
+	import PlayModeContainer from '$lib/PlayMode/PlayModeContainer.svelte';
+	import StatsContainer from '$lib/StatsComponents/StatsContainer.svelte';
+	import AboutContainer from '$lib/AboutComponents/AboutContainer.svelte';
 </script>
 
 <svelte:head>
 	<title>Math Game</title>
 </svelte:head>
 
-<div class="container">
-	<!-- Play -->
-	<!-- <div class="container-main"> -->
-	{#if $modeState == 'play'}
-		<Aside />
-		<Counter />
-	{/if}
-	<!-- </div> -->
-	<!-- Stats -->
-	<!-- About -->
-</div>
+<Aside />
+<!-- Play -->
+{#if $modeState == 'play'}
+	<PlayModeContainer />
+	<Counter />
+{:else if $modeState == 'stats'}
+	<StatsContainer />
+{:else if $modeState == 'about'}
+	<AboutContainer />
+{/if}
+
+<!-- About -->
 
 <style>
-	.container-main {
-	}
-	.container {
-		height: 100vh;
-		width: 100vw;
-		display: flex;
-		z-index: 1;
-	}
 </style>
