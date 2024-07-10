@@ -1,12 +1,16 @@
 <script>
 	import SettingIcon from '$lib/Icons/SettingIcon.svelte';
 	import { settingOpen, modeState } from '$lib/stores.js';
+	import { slide } from 'svelte/transition';
+	import './style.css';
 
 	function changeStats() {
 		settingOpen.update((n) => !n);
+		document.querySelector('.gear').classList.toggle('spin');
 	}
 	function changeMode(mode) {
 		modeState.update((n) => mode);
+		// changeStats();
 	}
 </script>
 
@@ -19,11 +23,13 @@
 
 	<div class="directories">
 		{#if $settingOpen}
-			<span>Directories</span>
+			<span in:slide={{ axis: 'y', duration: 200 }} on:click={changeStats}>Directories</span>
 		{:else}
-			<span on:click={() => changeMode('play')}>Play</span>
-			<span on:click={() => changeMode('stats')}>Stats</span>
-			<span on:click={() => changeMode('about')}>About</span>
+			<div class="directories" in:slide={{ axis: 'y', duration: 200 }}>
+				<span class="dir" on:click={() => changeMode('play')}>Play</span>
+				<span class="dir" on:click={() => changeMode('stats')}>Stats</span>
+				<span class="dir" on:click={() => changeMode('about')}>About</span>
+			</div>
 		{/if}
 	</div>
 </div>
@@ -58,16 +64,10 @@
 		left: 10px;
 		bottom: 5px;
 		font-size: 2.2rem;
+		transition: all 0.5s ease;
 		transform: translateY(5%);
 	}
-	.gear:hover {
-		font-size: 2.2rem;
-	}
-	.gear:active {
-		font-size: 2.2rem;
-		transform: rotate(-90deg) translateY(5%);
-		transition: all 0.4s;
-	}
+
 	.directories {
 		display: flex;
 		flex-direction: column;
@@ -75,5 +75,9 @@
 		align-items: start;
 		gap: 10px;
 		padding: 0.25rem;
+	}
+
+	.dir:hover {
+		text-decoration: underline;
 	}
 </style>

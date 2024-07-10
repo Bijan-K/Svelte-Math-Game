@@ -1,8 +1,7 @@
 <script>
-	import NotVisibleIcon from '../Icons/NotVisibleIcon.svelte';
-	import VisibleIcon from '../Icons/VisibleIcon.svelte';
-
-	import { flawsVisibility } from '$lib/stores.js';
+	import Records from './Records.svelte';
+	import Header from './Header.svelte';
+	import MappedEquations from './MappedEquations.svelte';
 </script>
 
 <div class="stats-container">
@@ -11,30 +10,13 @@
 		<h2>Stats</h2>
 
 		<!-- Stats (records) -->
-		<div class="cardHolder">
-			<div class="card"></div>
-			<div class="card">mid</div>
-			<div class="card">high</div>
-		</div>
+		<Records />
 
 		<!-- Mistakes and Misses -->
+		<Header />
 
-		<div>
-			<!-- Header -->
-			<div>
-				<h2>Mistakes</h2>
-				<span>
-					{#if $flawsVisibility}
-						<VisibleIcon />
-					{:else}
-						<NotVisibleIcon />
-					{/if}
-				</span>
-			</div>
-
-			<!-- The Equations -->
-			<div></div>
-		</div>
+		<!-- The Equations -->
+		<MappedEquations />
 	</div>
 </div>
 
@@ -46,7 +28,7 @@
 		width: 80vw;
 		height: 100vh;
 		z-index: 20;
-		background-color: #111827;
+		background-color: #000;
 	}
 	.holder {
 		padding: 0.75rem 2rem;
@@ -56,15 +38,7 @@
 	}
 	h2 {
 		font-size: 2.4rem;
-	}
-	.cardHolder {
-		display: grid;
-		grid-template-columns: 1fr 1fr 1fr;
-	}
-	.card {
-		place-self: center;
-		width: 200px;
-		height: 200px;
-		box-shadow: -1px 1px 5px 0px #eee;
+		text-align: center;
+		font-family: Merriweather;
 	}
 </style>

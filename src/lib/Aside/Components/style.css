@@ -1,0 +1,13 @@
+.active-ez {
+	background-color: rgba(0, 123, 82, 0.858);
+}
+.active-mid {
+	background-color: yellow;
+}
+.active-high {
+	background-color: red !important;
+}
+
+.hideBG {
+	background-color: #000;
+}

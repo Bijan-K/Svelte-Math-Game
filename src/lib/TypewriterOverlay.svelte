@@ -1,7 +1,6 @@
 <script>
 	import { onMount, tick, onDestroy } from 'svelte';
 	import Typewriter from './Typewriter.svelte';
-	import { modeState, showOverlay } from '$lib/stores.js';
 
 	let interval;
 	let interval2;
@@ -67,10 +66,40 @@
 	}
 
 	function getRandomPosition(containerWidth, containerHeight, elementWidth, elementHeight) {
+		const minX = 0;
 		const maxX = containerWidth - elementWidth;
+		const minY = 0;
 		const maxY = containerHeight - elementHeight;
-		const randomX = Math.floor(Math.random() * maxX);
-		const randomY = Math.floor(Math.random() * maxY);
+
+		// Calculate the forbidden zone
+		const forbiddenXStart = containerWidth * 0.35;
+		const forbiddenXEnd = containerWidth * 0.65;
+		const forbiddenYStart = containerHeight * 0.35;
+		const forbiddenYEnd = containerHeight * 0.65;
+
+		let randomX, randomY;
+
+		do {
+			// Generate random X position
+			if (Math.random() < 0.35) {
+				randomX = Math.floor(Math.random() * (forbiddenXStart - minX)) + minX;
+			} else {
+				randomX = Math.floor(Math.random() * (maxX - forbiddenXEnd)) + forbiddenXEnd;
+			}
+
+			// Generate random Y position
+			if (Math.random() < 0.35) {
+				randomY = Math.floor(Math.random() * (forbiddenYStart - minY)) + minY;
+			} else {
+				randomY = Math.floor(Math.random() * (maxY - forbiddenYEnd)) + forbiddenYEnd;
+			}
+		} while (
+			randomX >= forbiddenXStart &&
+			randomX <= forbiddenXEnd &&
+			randomY >= forbiddenYStart &&
+			randomY <= forbiddenYEnd
+		);
+
 		return { top: `${randomY}px`, left: `${randomX}px` };
 	}
 

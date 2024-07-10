@@ -1,11 +1,22 @@
+<script>
+	import DiffSelect from './DiffSelect.svelte';
+	import './style.css';
+
+	let hideBG = false;
+
+	function hideBackground() {
+		hideBG = !hideBG;
+		let playBG = document.getElementById('playcontainerid');
+		playBG.classList.toggle('hideBG');
+	}
+</script>
+
 <div class="play-aside">
 	<h2>Diff</h2>
 
-	<div class="diffHolder">
-		<div class="mode ez">Ez</div>
-		<div class="mode mid">Mid</div>
-		<div class="mode high">High</div>
-	</div>
+	<DiffSelect />
+
+	<div on:click={hideBackground} class="hide-bg-btn">{hideBG ? 'Show' : 'Hide'} Background</div>
 </div>
 
 <style>
@@ -20,18 +31,11 @@
 		align-items: center;
 		flex-direction: column;
 	}
-	.diffHolder {
-		padding: 20px;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		flex-direction: column;
-		gap: 0.5rem;
+
+	.hide-bg-btn {
+		font-family: lato;
 	}
-	.mode {
-		width: 8rem;
-		padding: 0.75rem 1.5rem;
-		border: 2px #eee solid;
-		text-align: center;
+	.hide-bg-btn:hover {
+		cursor: pointer;
 	}
 </style>

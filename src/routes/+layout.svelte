@@ -27,10 +27,10 @@
 		<!-- initial overlay -->
 		{#if $showOverlay}
 			<div class="block-container">
-				<div out:fly={{ x: -500, duration: 4000 }} class="block3"></div>
-				<div out:fly={{ x: 500, duration: 4000 }} class="block4"></div>
-				<div out:fly={{ y: -500, duration: 4000 }} class="block1"></div>
-				<div out:fly={{ y: 500, duration: 4000 }} class="block2"></div>
+				<div out:fly={{ x: -500, duration: 2000 }} class="block3"></div>
+				<div out:fly={{ x: 500, duration: 2000 }} class="block4"></div>
+				<div out:fly={{ y: -500, duration: 2000 }} class="block1"></div>
+				<div out:fly={{ y: 500, duration: 2000 }} class="block2"></div>
 			</div>
 
 			<div out:fade class="overlay-container">
