@@ -1,11 +1,14 @@
 .active-ez {
 	background-color: rgba(0, 123, 82, 0.858);
+	box-shadow: 0px 0px 5px 5px rgba(0, 123, 82, 0.858);
 }
 .active-mid {
 	background-color: rgba(255, 255, 0, 0.687);
+	box-shadow: 0px 0px 5px 5px rgba(255, 255, 0, 0.687);
 }
 .active-high {
 	background-color: rgba(255, 0, 0, 0.687);
+	box-shadow: 0px 0px 5px 5px rgba(255, 0, 0, 0.687);
 }
 
 .hideBG {
