@@ -4,6 +4,7 @@ export let modeState = writable(undefined);
 export let showOverlay = writable(true);
 export let flawsVisibility = writable(false);
 export let settingOpen = writable(false);
+export let selectedDiff = writable(undefined);
 
 export let record = writable([
 	{

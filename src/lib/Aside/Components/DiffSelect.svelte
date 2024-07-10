@@ -1,8 +1,13 @@
 <script>
+	import { selectedDiff } from '$lib/stores.js';
+
 	function addActive(diff) {
-		console.log('lol');
+		document.querySelector('.ez').classList.remove('active-ez');
+		document.querySelector('.mid').classList.remove('active-mid');
+		document.querySelector('.high').classList.remove('active-high');
+
 		document.querySelector(`.${diff}`).classList.add(`active-${diff}`);
-		console.log(document.querySelector(`.${diff}`));
+		selectedDiff.update((n) => diff);
 	}
 </script>
 
@@ -33,11 +38,13 @@
 		cursor: pointer;
 	}
 	.mid:hover {
-		background-color: rgba(255, 255, 0, 0.516);
-		box-shadow: 0px 0px 10px 5px #fddf47a2;
+		background-color: rgba(255, 255, 0, 0.614);
+		box-shadow: 0px 0px 10px 5px rgba(255, 255, 0, 0.751);
+		cursor: pointer;
 	}
 	.high:hover {
 		background-color: rgba(255, 0, 0, 0.717);
 		box-shadow: 0px 0px 10px 5px rgba(255, 0, 0, 0.575);
+		cursor: pointer;
 	}
 </style>
