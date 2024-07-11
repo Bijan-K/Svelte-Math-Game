@@ -56,8 +56,6 @@
 
 <div class="container">
 	{#each elements as element (element.id)}
-		<!-- svelte-ignore a11y-click-events-have-key-events -->
-		<!-- svelte-ignore a11y-no-static-element-interactions -->
 		<div
 			class="element"
 			style="left: {element.x}px; top: {element.y}px;"
@@ -78,8 +76,6 @@
 		position: relative;
 		width: 100%;
 		height: 100%;
-		border: 1px solid #ccc;
-		background-color: black;
 		z-index: 3;
 	}
 	.element {

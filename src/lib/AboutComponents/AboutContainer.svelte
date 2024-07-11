@@ -13,7 +13,7 @@
 
 		<section>
 			<p>Source Code:</p>
-			<a href="">
+			<a href="" rel="noopener noreferrer">
 				<GithubIcon />
 			</a>
 		</section>

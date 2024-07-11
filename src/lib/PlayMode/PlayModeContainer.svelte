@@ -1,8 +1,13 @@
 <script>
 	import CounterZone from '$lib/PlayMode/CounterZone.svelte';
+	import GameContainer from './GameContainer.svelte';
 </script>
 
-<div id="playcontainerid" class=""></div>
+<div id="playcontainerid" class="">
+	<GameContainer />
+
+	<CounterZone />
+</div>
 
 <style>
 	#playcontainerid {
