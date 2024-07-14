@@ -6,7 +6,7 @@ export default defineConfig({
 
 	resolve: {
 		alias: {
-			tagcloud: 'node_modules/tagcloud/dist/TagCloud.js'
+			tagcloud: 'node_modules/TagCloud/dist/TagCloud.js'
 		}
 	}
 });
