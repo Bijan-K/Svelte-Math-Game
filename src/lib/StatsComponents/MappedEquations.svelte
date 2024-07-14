@@ -60,6 +60,7 @@
 		font-family: lato;
 	}
 	.eq {
-		transition: all 0.5s;
+		transition: all 0.2s;
+		font-size: calc(32px +1vw);
 	}
 </style>

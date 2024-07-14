@@ -1,6 +1,7 @@
 <script>
 	import { cache } from '$lib/stores.js';
-	import HealthBars from './HealthBars.svelte';
+	import { fade, slide } from 'svelte/transition';
+	import Parallelogram from './Parallelogram.svelte';
 
 	let toggleShow = false;
 
@@ -34,7 +35,11 @@
 		</div>
 
 		<div class="heath-bars">
-			<HealthBars />
+			{#each Array($cache.hp) as _, i}
+				<div in:fade={{ duration: 200 }} out:slide={{ duration: 200 }}>
+					<Parallelogram />
+				</div>
+			{/each}
 		</div>
 	</div>
 </div>
@@ -44,6 +49,10 @@
 		position: absolute;
 		right: 10px;
 		bottom: 10px;
+		padding: 2rem;
+
+		display: flex;
+		gap: 5px;
 	}
 	h2 {
 		min-height: 2rem;
@@ -68,6 +77,8 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
+
+		position: relative;
 	}
 	.counter {
 		border-bottom: solid #eee 2px;

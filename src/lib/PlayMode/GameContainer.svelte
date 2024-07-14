@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-	import { fade } from 'svelte/transition';
+	import { fade, scale } from 'svelte/transition';
 	import { cache, record, missed_eq_list } from '$lib/stores.js';
 	import { getTodaysDateFormatted } from '$lib/functions.js';
 
@@ -10,7 +10,7 @@
 	const containerHeight = 600;
 	const elementWidth = 100;
 	const elementHeight = 70;
-	const elementLifetime = 2000; // 20 seconds 20000
+	const elementLifetime = 20000; // 20 seconds
 
 	let elements = [];
 	let idCounter = 0;
@@ -40,7 +40,9 @@
 		}
 	};
 
-	$: currentConfig = $cache.diff ? difficultyConfig[$cache.diff] : null;
+	$: currentConfig = $cache.diff ? difficultyConfig[$cache.diff] : 'Null';
+
+	const goldenBoxChance = 0.1; // 10% chance for a golden box
 
 	function createEquation() {
 		const operations = ['+', '-', '*', '/'];
@@ -82,7 +84,17 @@
 			y = Math.random() * (containerHeight - elementHeight);
 		} while (isOverlapping(x, y));
 
-		const newElement = { id, x, y, progress: 100, equation, startTime: Date.now() };
+		const isGolden = Math.random() < goldenBoxChance;
+		const newElement = {
+			id,
+			x,
+			y,
+			progress: 100,
+			equation,
+			startTime: Date.now(),
+			isGolden,
+			state: 'normal'
+		};
 		elements = [...elements, newElement];
 		return newElement;
 	}
@@ -115,10 +127,14 @@
 				`${element.equation.a} ${element.equation.operation} ${element.equation.b}`
 			];
 			cache.update((c) => ({ ...c, hp: c.hp - 1 }));
+			element.state = 'missed';
+			setTimeout(() => {
+				elements = elements.filter((el) => el.id !== element.id);
+			}, 500);
 			if ($cache.hp <= 0) {
 				endGame();
 			} else {
-				spawnNewElement();
+				setTimeout(spawnNewElement, 500);
 			}
 		});
 	}
@@ -163,21 +179,15 @@
 		elements = [];
 
 		// Check for high score
-
 		let index = $record.findIndex((el) => el.diff == $cache.diff);
 		if (index != -1) {
-			console.log('----------------');
 			if ($record[index].count < score) {
-				console.log('---------------------------');
-
 				record.update((n) => {
 					n[index] = { ...n[index], count: score, date: getTodaysDateFormatted() };
 					return n;
 				});
 			}
 		}
-
-		console.log('endgame', $record);
 
 		// Add misses to the collection of misses
 		function processEquations(equations) {
@@ -205,9 +215,6 @@
 		}
 
 		missed_eq_list.set(processEquations(missedEquations));
-
-		console.log('record', $record);
-		console.log('missed', $missed_eq_list);
 
 		// reset
 		score = 0;
@@ -238,10 +245,17 @@
 				const answer = parseInt(userInput);
 				const correctElementIndex = elements.findIndex((el) => el.equation.answer === answer);
 				if (correctElementIndex !== -1) {
-					elements = elements.filter((_, index) => index !== correctElementIndex);
+					const correctElement = elements[correctElementIndex];
+					correctElement.state = 'correct';
 					score++;
 					cache.update((n) => ({ ...n, score: score }));
-					spawnNewElement();
+					if (correctElement.isGolden) {
+						cache.update((c) => ({ ...c, hp: c.hp + 1 }));
+					}
+					setTimeout(() => {
+						elements = elements.filter((_, index) => index !== correctElementIndex);
+						setTimeout(spawnNewElement, 200);
+					}, 500);
 				}
 				userInput = '';
 				cache.update((n) => ({ ...n, userInput: userInput }));
@@ -287,9 +301,13 @@
 		{#each elements as element (element.id)}
 			<div
 				class="element"
+				class:golden={element.isGolden}
+				class:correct={element.state === 'correct'}
+				class:missed={element.state === 'missed'}
 				style="left: {element.x}px; top: {element.y}px;"
 				in:fade={{ duration: 200 }}
 				out:fade={{ duration: 200 }}
+				animate:scale={{ start: element.state === 'correct' ? 1.2 : 0.8, duration: 500 }}
 			>
 				<div class="equation-top">{element.equation.a} {element.equation.operation}</div>
 				<div class="equation-bottom">{element.equation.b}</div>
@@ -377,5 +395,25 @@
 		100% {
 			background-color: #ff0000;
 		}
+	}
+
+	.element.golden {
+		background-color: #ffd700;
+		color: #000;
+		border-color: #daa520;
+	}
+
+	.element.correct {
+		background-color: #4caf50;
+		border-color: #45a049;
+		transform: scale(120%);
+		transition: all 0.2s;
+	}
+
+	.element.missed {
+		background-color: #ff0000;
+		border-color: #cc0000;
+		transform: scale(80%);
+		transition: all 0.2s;
 	}
 </style>

@@ -24,17 +24,11 @@ export let record = writable([
 	}
 ]);
 
-export let missed_eq_list = writable([
-	{
-		equation: '2+2',
-		times: 5,
-		answer: 4
-	}
-]);
+export let missed_eq_list = writable([]);
 
 export let cache = writable({
-	diff: '...',
-	hp: 0,
+	diff: 'Null',
+	hp: 5,
 	score: 0,
 	gameState: false,
 	userInput: ''

@@ -68,7 +68,7 @@
 			</div>
 
 			<div out:fade class="overlay-container">
-				<h1>Quick Maths Game</h1>
+				<h1>Quick Math Game</h1>
 				<p>A simple webapp for practicing mental quick math</p>
 
 				<div class="overlay-btn-container">
