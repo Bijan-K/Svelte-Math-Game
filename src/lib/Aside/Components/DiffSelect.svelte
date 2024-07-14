@@ -1,13 +1,16 @@
 <script>
-	import { selectedDiff } from '$lib/stores.js';
+	import { selectedDiff, cache } from '$lib/stores.js';
 
 	function addActive(diff) {
-		document.querySelector('.ez').classList.remove('active-ez');
-		document.querySelector('.mid').classList.remove('active-mid');
-		document.querySelector('.high').classList.remove('active-high');
+		if ($cache.gameState == false) {
+			document.querySelector('.ez').classList.remove('active-ez');
+			document.querySelector('.mid').classList.remove('active-mid');
+			document.querySelector('.high').classList.remove('active-high');
 
-		document.querySelector(`.${diff}`).classList.add(`active-${diff}`);
-		selectedDiff.update((n) => diff);
+			document.querySelector(`.${diff}`).classList.add(`active-${diff}`);
+			selectedDiff.update((n) => diff);
+			cache.update((n) => ({ ...n, diff: diff }));
+		}
 	}
 </script>
 

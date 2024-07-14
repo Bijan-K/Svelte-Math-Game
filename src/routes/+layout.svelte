@@ -81,10 +81,12 @@
 	}
 	.overlay-container h1 {
 		font-size: 4rem;
+		text-align: center;
 	}
 
 	.overlay-container p {
 		font-size: 1.5rem;
+		text-align: center;
 	}
 	.block-container {
 		position: fixed;

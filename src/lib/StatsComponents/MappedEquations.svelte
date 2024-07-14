@@ -6,15 +6,15 @@
 <div class="eq-container">
 	<div class="row">
 		<span class="title">Equation</span>
-		<span class="title">Times</span>
 		<span class="title">Answer</span>
+		<span class="title">Times</span>
 	</div>
 
 	{#each $misses as miss (miss)}
 		<div class="row row-eq">
 			<span class="eq">{miss.equation}</span>
-			<span class="eq">{miss.times}</span>
 			<span class={`eq blur b`}>{miss.answer}</span>
+			<span class="eq">{miss.times}</span>
 		</div>
 	{/each}
 </div>

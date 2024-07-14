@@ -2,7 +2,7 @@
 	import DiffSelect from './DiffSelect.svelte';
 	import './style.css';
 
-	let hideBG = false;
+	let hideBG = true;
 
 	function hideBackground() {
 		hideBG = !hideBG;

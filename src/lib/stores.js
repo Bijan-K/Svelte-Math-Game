@@ -3,7 +3,7 @@ import { writable } from 'svelte/store';
 export let modeState = writable(undefined);
 export let showOverlay = writable(true);
 export let flawsVisibility = writable(false);
-export let settingOpen = writable(false);
+export let settingOpen = writable(true);
 export let selectedDiff = writable(undefined);
 
 export let record = writable([
@@ -29,25 +29,13 @@ export let misses = writable([
 		equation: '2+2',
 		times: 5,
 		answer: '4'
-	},
-	{
-		equation: '2+2',
-		times: 5,
-		answer: '4'
-	},
-	{
-		equation: '2+2',
-		times: 5,
-		answer: '4'
-	},
-	{
-		equation: '2+2',
-		times: 5,
-		answer: '4'
-	},
-	{
-		equation: '2+2',
-		times: 5,
-		answer: '4'
 	}
 ]);
+
+export let cache = writable({
+	diff: '...',
+	hp: 0,
+	score: 0,
+	gameState: false,
+	userInput: ''
+});
