@@ -1,20 +1,20 @@
 <script>
-	import { missed_eq_list, flawsVisibility } from '$lib/stores.js';
+	import { missed_eq_list } from '$lib/stores.js';
 	import './style.css';
 </script>
 
 <div class="eq-container">
 	<div class="row row-eq">
 		<span class="title eq-eq">Equation</span>
-		<span class="title beq">Answer</span>
 		<span class="title eq-times">Times</span>
+		<span class="title beq">Answer</span>
 	</div>
 
 	{#each $missed_eq_list as miss (miss)}
 		<div class="row row-eq">
 			<span class="eq eq-eq">{miss.equation}</span>
-			<span class={`eq blur b`}>{miss.answer}</span>
 			<span class="eq eq-times">{miss.times}</span>
+			<span class={`eq blur b`}>{miss.answer}</span>
 		</div>
 	{/each}
 </div>
@@ -43,13 +43,13 @@
 		place-self: start;
 	}
 	.beq {
-		place-self: center;
+		place-self: end;
 	}
 	.b {
-		place-self: center;
+		place-self: end;
 	}
 	.eq-times {
-		place-self: end;
+		place-self: center;
 	}
 
 	span {
