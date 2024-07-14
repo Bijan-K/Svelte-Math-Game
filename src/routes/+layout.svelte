@@ -3,7 +3,7 @@
 	import './scrollbar.css';
 
 	import { fade, fly } from 'svelte/transition';
-	import { modeState, showOverlay } from '$lib/stores.js';
+	import { modeState, showOverlay, record, missed_eq_list } from '$lib/stores.js';
 	import TagCloud from '../lib/TagCloud.svelte';
 	import TypewriterOverlay from '../lib/TypewriterOverlay.svelte';
 
@@ -12,6 +12,40 @@
 		showOverlay.set(false);
 		modeState.update((n) => e.target.id);
 	}
+
+	// Add to local storage save
+	onMount(() => {
+		data.subscribe((value) => {
+			record.setItem('record', JSON.stringify(value));
+		});
+
+		missed_eq_list.subscribe((value) => {
+			localStorage.setItem('missed_eq_list', JSON.stringify(value));
+		});
+
+		function loadFromLocalStorage() {
+			const storedWords = localStorage.getItem('record');
+			const storedOther = localStorage.getItem('missed_eq_list');
+
+			if (storedWords) {
+				try {
+					record.set(JSON.parse(storedWords));
+				} catch (error) {
+					console.error('Error parsing stored words:', error);
+				}
+			}
+
+			if (storedOther) {
+				try {
+					missed_eq_list.set(JSON.parse(storedOther));
+				} catch (error) {
+					console.error('Error parsing stored other:', error);
+				}
+			}
+		}
+
+		loadFromLocalStorage();
+	});
 </script>
 
 <div class="app">

@@ -29,12 +29,14 @@
 		height: 100vh;
 		z-index: 20;
 		background-color: #000;
+		overflow-y: scroll;
 	}
 	.holder {
 		padding: 0.75rem 2rem;
 		display: flex;
 		gap: 2rem;
 		flex-direction: column;
+		overflow: scroll;
 	}
 	h2 {
 		font-size: 2.4rem;

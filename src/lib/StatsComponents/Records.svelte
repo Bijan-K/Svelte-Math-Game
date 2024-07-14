@@ -12,7 +12,7 @@
 
 			<div class="record">
 				<h4>{diff.count}</h4>
-				<p>record</p>
+				<p>-- Record --</p>
 			</div>
 
 			<h5 class="date">{diff.date}</h5>

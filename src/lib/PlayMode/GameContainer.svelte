@@ -1,19 +1,20 @@
 <script>
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
-	import { cache } from '$lib/stores.js';
+	import { cache, record, missed_eq_list } from '$lib/stores.js';
+	import { getTodaysDateFormatted } from '$lib/functions.js';
+
 	import GameOver from './GameOver.svelte';
 
 	const containerWidth = 800;
 	const containerHeight = 600;
 	const elementWidth = 100;
 	const elementHeight = 70;
-	const elementLifetime = 20000; // 20 seconds 20000
+	const elementLifetime = 2000; // 20 seconds 20000
 
 	let elements = [];
 	let idCounter = 0;
 	let score = 0;
-	let missed = 0;
 	let missedEquations = [];
 	let userInput = '';
 	let isGamePaused = true;
@@ -113,7 +114,6 @@
 				...missedEquations,
 				`${element.equation.a} ${element.equation.operation} ${element.equation.b}`
 			];
-			missed++;
 			cache.update((c) => ({ ...c, hp: c.hp - 1 }));
 			if ($cache.hp <= 0) {
 				endGame();
@@ -162,7 +162,63 @@
 		cancelAnimationFrame(animationFrameId);
 		elements = [];
 
-		// Additional end game logic here
+		// Check for high score
+
+		let index = $record.findIndex((el) => el.diff == $cache.diff);
+		if (index != -1) {
+			console.log('----------------');
+			if ($record[index].count < score) {
+				console.log('---------------------------');
+
+				record.update((n) => {
+					n[index] = { ...n[index], count: score, date: getTodaysDateFormatted() };
+					return n;
+				});
+			}
+		}
+
+		console.log('endgame', $record);
+
+		// Add misses to the collection of misses
+		function processEquations(equations) {
+			let formerList = $missed_eq_list;
+
+			const equationObjects = equations.map((eq) => ({
+				equation: eq,
+				answer: eval(eq),
+				times: 1
+			}));
+
+			formerList.push(...equationObjects);
+
+			const result = formerList.reduce((acc, curr) => {
+				const existingEq = acc.find((item) => item.equation === curr.equation);
+				if (existingEq) {
+					existingEq.times++;
+				} else {
+					acc.push(curr);
+				}
+				return acc;
+			}, []);
+
+			return result;
+		}
+
+		missed_eq_list.set(processEquations(missedEquations));
+
+		console.log('record', $record);
+		console.log('missed', $missed_eq_list);
+
+		// reset
+		score = 0;
+		missedEquations = [];
+		cache.update((n) => ({
+			...n,
+			hp: 0,
+			score: 0,
+			gameState: false,
+			userInput: ''
+		}));
 	}
 
 	function handleKeydown(event) {
@@ -276,12 +332,12 @@
 		position: absolute;
 		width: 100px;
 		height: 70px;
-		background-color: #333333;
+		background-color: #121212;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		flex-direction: column;
-		border-radius: 4px;
+		border-radius: 2px;
 		border: 1px solid white;
 		color: white;
 		font-size: 18px;

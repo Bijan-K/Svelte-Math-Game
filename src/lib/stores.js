@@ -24,11 +24,11 @@ export let record = writable([
 	}
 ]);
 
-export let misses = writable([
+export let missed_eq_list = writable([
 	{
 		equation: '2+2',
 		times: 5,
-		answer: '4'
+		answer: 4
 	}
 ]);
 

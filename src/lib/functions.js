@@ -1,23 +1,27 @@
-function generateRandomEquation() {
-	let [x, y] = [Math.floor(Math.random() * 10 + 1), Math.floor(Math.random() * 10 + 1)];
-	let z = ['+', '-', '*'];
-	let rand = Math.floor(Math.random() * z.length);
-	let answer = eval(`${x}${z[rand]}${y}`);
+export function getTodaysDateFormatted() {
+	const date = new Date();
+	const months = [
+		'January',
+		'February',
+		'March',
+		'April',
+		'May',
+		'June',
+		'July',
+		'August',
+		'September',
+		'October',
+		'November',
+		'December'
+	];
+	const month = months[date.getMonth()];
+	const day = date.getDate();
+	const year = date.getFullYear();
 
-	return `${x} ${z[rand]} ${y} = ${answer}`;
+	let suffix = 'th';
+	if (day === 1 || day === 21 || day === 31) suffix = 'st';
+	else if (day === 2 || day === 22) suffix = 'nd';
+	else if (day === 3 || day === 23) suffix = 'rd';
+
+	return `${month} ${day}${suffix} ${year}`;
 }
-
-generateRandomEquation();
-
-function printAndAddLetters(str, interval) {
-	let result = '';
-	for (let i = 0; i < str.length; i++) {
-		setTimeout(() => {
-			result += str[i];
-			console.log(result);
-		}, i * interval);
-	}
-}
-
-// Example usage
-printAndAddLetters('Hello, World!', 100);
