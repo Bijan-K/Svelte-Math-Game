@@ -1,11 +1,17 @@
 import { writable } from 'svelte/store';
 
+// Basic states
 export let modeState = writable(undefined);
 export let showOverlay = writable(true);
 export let flawsVisibility = writable(false);
 export let settingOpen = writable(true);
 export let selectedDiff = writable(undefined);
 
+// Mobile
+export let mobileMenuState = writable(false);
+export let isMobile = writable(false);
+
+// Things that get saved
 export let record = writable([
 	{
 		diff: 'ez',
@@ -23,9 +29,9 @@ export let record = writable([
 		count: 0
 	}
 ]);
-
 export let missed_eq_list = writable([]);
 
+// Basically RAM
 export let cache = writable({
 	diff: 'Null',
 	hp: 5,

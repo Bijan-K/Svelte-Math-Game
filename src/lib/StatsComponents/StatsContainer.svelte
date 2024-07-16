@@ -2,6 +2,14 @@
 	import Records from './Records.svelte';
 	import Header from './Header.svelte';
 	import MappedEquations from './MappedEquations.svelte';
+	import SettingIcon from '../Icons/SettingIcon.svelte';
+
+	import { mobileMenuState, isMobile } from '$lib/stores.js';
+
+	function changeStats() {
+		document.querySelector('.prime-container').classList.toggle('mobile-slide');
+		mobileMenuState.update((n) => !n);
+	}
 </script>
 
 <div class="stats-container">
@@ -17,10 +25,26 @@
 
 		<!-- The Equations -->
 		<MappedEquations />
+
+		{#if $isMobile && !$mobileMenuState}
+			<span class="gear" on:click={changeStats}>
+				<SettingIcon />
+			</span>
+		{/if}
 	</div>
 </div>
 
 <style>
+	.gear {
+		position: fixed;
+		bottom: 2rem;
+		left: 1.5rem;
+		font-size: 2.2rem;
+		transition: all 0.5s ease;
+		transform: translateY(5%);
+		z-index: 21;
+	}
+
 	.stats-container {
 		position: absolute;
 		top: 0;
@@ -28,9 +52,16 @@
 		width: 80vw;
 		height: 100vh;
 		z-index: 20;
-		background-color: #000;
 		overflow-y: scroll;
+		transition: all 0.5s;
 	}
+
+	@media (max-width: 768px) {
+		.stats-container {
+			width: 100vw;
+		}
+	}
+
 	.holder {
 		padding: 0.75rem 2rem;
 		display: flex;

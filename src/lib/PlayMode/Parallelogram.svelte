@@ -19,6 +19,13 @@
 		overflow: hidden;
 	}
 
+	@media (max-width: 768px) {
+		.parallelogram {
+			width: 10px;
+			height: 33px;
+		}
+	}
+
 	.parallelogram::after {
 		content: '';
 		position: absolute;

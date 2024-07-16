@@ -1,7 +1,9 @@
 <script>
 	import './globals.css';
 	import './scrollbar.css';
+	import './mobile-classes.css';
 
+	import { onMount } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
 	import { modeState, showOverlay, record, missed_eq_list } from '$lib/stores.js';
 	import TagCloud from '../lib/TagCloud.svelte';
@@ -14,38 +16,38 @@
 	}
 
 	// Add to local storage save
-	// onMount(() => {
-	// 	data.subscribe((value) => {
-	// 		record.setItem('record', JSON.stringify(value));
-	// 	});
+	onMount(() => {
+		record.subscribe((value) => {
+			localStorage.setItem('record', JSON.stringify(value));
+		});
 
-	// 	missed_eq_list.subscribe((value) => {
-	// 		localStorage.setItem('missed_eq_list', JSON.stringify(value));
-	// 	});
+		missed_eq_list.subscribe((value) => {
+			localStorage.setItem('missed_eq_list', JSON.stringify(value));
+		});
 
-	// 	function loadFromLocalStorage() {
-	// 		const storedWords = localStorage.getItem('record');
-	// 		const storedOther = localStorage.getItem('missed_eq_list');
+		function loadFromLocalStorage() {
+			const storedWords = localStorage.getItem('record');
+			const storedOther = localStorage.getItem('missed_eq_list');
 
-	// 		if (storedWords) {
-	// 			try {
-	// 				record.set(JSON.parse(storedWords));
-	// 			} catch (error) {
-	// 				console.error('Error parsing stored words:', error);
-	// 			}
-	// 		}
+			if (storedWords) {
+				try {
+					record.set(JSON.parse(storedWords));
+				} catch (error) {
+					console.error('Error parsing stored words:', error);
+				}
+			}
 
-	// 		if (storedOther) {
-	// 			try {
-	// 				missed_eq_list.set(JSON.parse(storedOther));
-	// 			} catch (error) {
-	// 				console.error('Error parsing stored other:', error);
-	// 			}
-	// 		}
-	// 	}
+			if (storedOther) {
+				try {
+					missed_eq_list.set(JSON.parse(storedOther));
+				} catch (error) {
+					console.error('Error parsing stored other:', error);
+				}
+			}
+		}
 
-	// 	loadFromLocalStorage();
-	// });
+		loadFromLocalStorage();
+	});
 </script>
 
 <div class="app">

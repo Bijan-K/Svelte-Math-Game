@@ -24,7 +24,16 @@
 	.cardHolder {
 		display: grid;
 		grid-template-columns: 1fr 1fr 1fr;
+		gap: 20px;
 	}
+
+	@media (max-width: 768px) {
+		.cardHolder {
+			grid-template-columns: 1fr;
+			grid-template-rows: 1fr 1fr 1fr;
+		}
+	}
+
 	.card {
 		place-self: center;
 		width: 200px;

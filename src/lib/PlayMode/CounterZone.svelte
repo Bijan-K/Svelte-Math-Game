@@ -49,7 +49,7 @@
 		position: absolute;
 		right: 10px;
 		bottom: 10px;
-		padding: 2rem;
+		padding: 2rem 0.5rem;
 
 		display: flex;
 		gap: 5px;
@@ -70,6 +70,12 @@
 		align-items: center;
 		z-index: 3;
 	}
+	@media (max-width: 768px) {
+		.counter-container {
+			width: 100vw;
+		}
+	}
+
 	.container {
 		border-top: 1px #eee solid;
 		width: 90%;

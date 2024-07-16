@@ -47,6 +47,12 @@
 		z-index: 3;
 	}
 
+	@media (max-width: 768px) {
+		.aside {
+			width: 90vw;
+		}
+	}
+
 	h2 {
 		text-align: center;
 		font-size: 2rem;

@@ -242,7 +242,7 @@
 				userInput = userInput.slice(0, -1);
 				cache.update((n) => ({ ...n, userInput: userInput }));
 			} else if (event.key === 'Enter') {
-				const answer = parseInt(userInput);
+				const answer = parseInt($cache.userInput);
 				const correctElementIndex = elements.findIndex((el) => el.equation.answer === answer);
 				if (correctElementIndex !== -1) {
 					const correctElement = elements[correctElementIndex];
@@ -346,6 +346,13 @@
 		overflow: hidden;
 		background-color: transparent;
 	}
+
+	@media (max-width: 768px) {
+		.container {
+			width: 100vw;
+		}
+	}
+
 	.element {
 		position: absolute;
 		width: 100px;

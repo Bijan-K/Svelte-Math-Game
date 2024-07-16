@@ -54,6 +54,13 @@
 		position: relative;
 	}
 
+	@media (max-width: 768px) {
+		.health-bar {
+			width: 10px;
+			height: 33px;
+		}
+	}
+
 	.health-bar-fill {
 		position: absolute;
 		bottom: 0;

@@ -1,5 +1,13 @@
 <script>
 	import GithubIcon from '../Icons/GithubIcon.svelte';
+	import SettingIcon from '../Icons/SettingIcon.svelte';
+
+	import { mobileMenuState, isMobile } from '$lib/stores.js';
+
+	function changeStats() {
+		document.querySelector('.prime-container').classList.toggle('mobile-slide');
+		mobileMenuState.update((n) => !n);
+	}
 </script>
 
 <div class="about-container">
@@ -13,7 +21,7 @@
 
 		<section>
 			<p>Source Code:</p>
-			<a href="" rel="noopener noreferrer">
+			<a href="https://github.com/Bijan-K/Svelte-Math-Game" rel="noopener noreferrer">
 				<GithubIcon />
 			</a>
 		</section>
@@ -21,10 +29,26 @@
 		<footer>
 			<div>Made by Bijan</div>
 		</footer>
+
+		{#if $isMobile && !$mobileMenuState}
+			<span class="gear" on:click={changeStats}>
+				<SettingIcon />
+			</span>
+		{/if}
 	</div>
 </div>
 
 <style>
+	.gear {
+		position: fixed;
+		bottom: 2rem;
+		left: 1.5rem;
+		font-size: 2.2rem;
+		transition: all 0.5s ease;
+		transform: translateY(5%);
+		z-index: 21;
+	}
+
 	.about-container {
 		position: absolute;
 		top: 0;
@@ -33,7 +57,15 @@
 		height: 100vh;
 		z-index: 20;
 		background-color: #000;
+		transition: all 0.5s;
 	}
+
+	@media (max-width: 768px) {
+		.about-container {
+			width: 100vw;
+		}
+	}
+
 	.holder {
 		padding: 0.75rem 2rem;
 		display: flex;

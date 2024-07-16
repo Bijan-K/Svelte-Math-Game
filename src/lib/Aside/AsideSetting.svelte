@@ -2,7 +2,7 @@
 	import SettingIcon from '$lib/Icons/SettingIcon.svelte';
 	import { settingOpen } from '$lib/stores.js';
 	import { slide } from 'svelte/transition';
-	import './style.css';
+
 	import SettingDirectories from './SettingDirectories.svelte';
 
 	function changeStats() {
@@ -52,6 +52,7 @@
 		font-size: 2.2rem;
 		transition: all 0.5s ease;
 		transform: translateY(5%);
+		z-index: 21;
 	}
 
 	.directories {
