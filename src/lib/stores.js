@@ -34,7 +34,7 @@ export let missed_eq_list = writable([]);
 // Basically RAM
 export let cache = writable({
 	diff: 'Null',
-	hp: 5,
+	hp: 0,
 	score: 0,
 	gameState: false,
 	userInput: ''

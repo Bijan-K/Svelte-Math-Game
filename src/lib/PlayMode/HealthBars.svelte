@@ -4,7 +4,7 @@
 	import { cubicOut } from 'svelte/easing';
 	import { cache } from '$lib/stores.js';
 
-	let healthBars = [1, 1, 1, 1, 1, 1, 1, 1];
+	let healthBars = $cache.hp;
 
 	function updateHealthBars(newHp) {
 		const currentBars = healthBars.length;

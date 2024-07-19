@@ -10,10 +10,10 @@
 	let windowWidth;
 
 	$: if (windowWidth < 768) isMobile.update((n) => true);
+	$: if (windowWidth > 768) isMobile.update((n) => false);
 
 	onMount(() => {
 		windowWidth = window.innerWidth;
-		console.log('one');
 	});
 </script>
 
@@ -44,7 +44,6 @@
 		height: 100dvh;
 		z-index: 20;
 		background-color: #000;
-		overflow-y: scroll;
 		transition: all 0.5s;
 	}
 

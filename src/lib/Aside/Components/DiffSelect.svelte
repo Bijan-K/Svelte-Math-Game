@@ -1,6 +1,12 @@
 <script>
 	import { selectedDiff, cache } from '$lib/stores.js';
 
+	let hp_data = {
+		ez: 5,
+		mid: 3,
+		high: 1
+	};
+
 	function addActive(diff) {
 		if ($cache.gameState == false) {
 			document.querySelector('.ez').classList.remove('active-ez');
@@ -9,7 +15,7 @@
 
 			document.querySelector(`.${diff}`).classList.add(`active-${diff}`);
 			selectedDiff.update((n) => diff);
-			cache.update((n) => ({ ...n, diff: diff }));
+			cache.update((n) => ({ ...n, diff: diff, hp: hp_data[diff] }));
 		}
 	}
 </script>

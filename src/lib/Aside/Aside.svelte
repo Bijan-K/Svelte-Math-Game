@@ -8,7 +8,7 @@
 	import AddIcon from '../Icons/AddIcon.svelte';
 	import AsideSetting from './AsideSetting.svelte';
 
-	$: console.log($modeState);
+	$: $modeState;
 </script>
 
 {#if $modeState == 'play' || $modeState == 'about' || $modeState == 'stats'}

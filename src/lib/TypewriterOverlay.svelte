@@ -60,7 +60,7 @@
 		{ text: '260 / 13 = 20', weight: 10 }
 	];
 
-	function getRandomEquations(equations, count = 15) {
+	function getRandomEquations(equations, count = 9) {
 		const shuffled = [...equations].sort(() => 0.5 - Math.random());
 		return shuffled.slice(0, count);
 	}

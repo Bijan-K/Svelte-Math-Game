@@ -154,12 +154,11 @@
 	let animationFrameId;
 
 	function startGame() {
-		if (isGamePaused && $cache.diff) {
+		if (isGamePaused && $cache.diff !== 'Null') {
 			isGamePaused = false;
 			cache.update((n) => ({ ...n, gameState: true }));
 			gameStartTime = Date.now();
 			lastSpawnTime = gameStartTime;
-			console.log(currentConfig);
 			cache.update((c) => ({ ...c, hp: currentConfig.healthBars }));
 			initialSpawn();
 			gameLoop();
@@ -229,7 +228,8 @@
 	}
 
 	function handleKeydown(event) {
-		if (isGamePaused && event.key === 'Enter') {
+		if (isGamePaused && event.key === 'Enter' && $cache.diff !== 'Null') {
+			console.log('start was at 232');
 			startGame();
 			return;
 		}
@@ -255,7 +255,7 @@
 					setTimeout(() => {
 						elements = elements.filter((_, index) => index !== correctElementIndex);
 						setTimeout(spawnNewElement, 200);
-					}, 500);
+					}, 100);
 				}
 				userInput = '';
 				cache.update((n) => ({ ...n, userInput: userInput }));
@@ -350,6 +350,7 @@
 	@media (max-width: 768px) {
 		.container {
 			width: 100vw;
+			height: 68dvh;
 		}
 	}
 

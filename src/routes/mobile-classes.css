@@ -1,3 +1,9 @@
 .mobile-slide {
 	transform: translateX(90%);
 }
+
+@media screen and (min-width: 768px) {
+	.mobile-slide {
+		transform: translateX(0%);
+	}
+}

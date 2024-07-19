@@ -20,9 +20,6 @@
 		document.querySelector(`.${mode}-dir`).classList.add('underline');
 		document.querySelector('.prime-container').classList.toggle('mobile-slide');
 		mobileMenuState.update((n) => !n);
-		console.log($mobileMenuState);
-
-		// changeStats();
 	}
 
 	function handleHover(parentId) {

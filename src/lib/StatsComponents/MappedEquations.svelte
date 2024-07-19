@@ -12,13 +12,23 @@
 	{#each $missed_eq_list as miss (miss)}
 		<div class="row row-eq">
 			<span class="eq eq-eq">{miss.equation}</span>
-			<span class="eq blur b">{miss.answer}</span>
+			<span class="eq blur b">= {miss.answer}</span>
 			<span class="eq eq-times">{miss.times}</span>
 		</div>
 	{/each}
+
+	{#if $missed_eq_list.length == 0}
+		<p>nothing here</p>
+	{/if}
 </div>
 
 <style>
+	p {
+		text-align: center;
+		font-size: larger;
+		padding: 1rem;
+	}
+
 	.eq-container {
 		margin: 0 5%;
 		transform: translateY(-1.5rem);

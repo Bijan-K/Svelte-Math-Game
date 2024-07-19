@@ -68,6 +68,7 @@
 		}
 		.set {
 			width: 100vw;
+			height: 68dvh;
 		}
 	}
 </style>

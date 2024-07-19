@@ -1,19 +1,17 @@
 <script>
 	import { onMount } from 'svelte';
+	import { cache } from '$lib/stores.js';
 
 	let userInput = '';
-	let isNegative = false;
 
 	function handleInput(value) {
 		if (value === 'enter') {
 			// Process the input here
-			console.log('Entered:', isNegative ? -parseFloat(userInput) : parseFloat(userInput));
 			userInput = '';
-			isNegative = false;
-		} else if (value === '-') {
-			isNegative = !isNegative;
+			cache.update((n) => ({ ...n, userInput: userInput }));
 		} else {
 			userInput += value;
+			cache.update((n) => ({ ...n, userInput: userInput }));
 		}
 	}
 
@@ -27,45 +25,44 @@
 </script>
 
 <div class="numpad">
-	<div class="display">{(isNegative ? '-' : '') + userInput}</div>
-	{#each ['7', '8', '9', '4', '5', '6', '1', '2', '3', '-', '0', 'enter'] as button}
+	{#each ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'enter'] as button}
 		<button on:click={() => handleInput(button)}>{button}</button>
 	{/each}
 </div>
 
 <style>
 	.numpad {
+		position: absolute;
+		bottom: 12dvh;
+
+		height: 20dvh;
 		display: grid;
-		grid-template-columns: repeat(3, 1fr);
+		grid-template-columns: repeat(4, 1fr);
+
 		gap: 5px;
-		max-width: 300px;
+		width: 100dvw;
 		margin: auto;
 		padding: 10px;
-		background-color: #f0f0f0;
-		border-radius: 10px;
+
+		border-top: #e0e0e0 2px solid;
 	}
-	.display {
-		grid-column: 1 / -1;
-		background-color: white;
-		padding: 10px;
-		text-align: right;
-		font-size: 1.5em;
-		margin-bottom: 10px;
-		border-radius: 5px;
-	}
+
 	button {
 		padding: 15px;
 		font-size: 1.2em;
-		background-color: white;
 		border: none;
+		border: 1px white solid;
+		background-color: transparent;
+		color: azure;
 		border-radius: 5px;
 		cursor: pointer;
-		transition: background-color 0.1s;
 	}
 	button:active {
 		background-color: #e0e0e0;
 	}
+
 	button:last-child {
-		grid-column: 2 / -1;
+		grid-row: 1/3;
+		grid-column: 4/4;
 	}
 </style>

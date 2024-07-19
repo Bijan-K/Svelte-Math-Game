@@ -25,13 +25,13 @@
 
 		<!-- The Equations -->
 		<MappedEquations />
-
-		{#if $isMobile && !$mobileMenuState}
-			<span class="gear" on:click={changeStats}>
-				<SettingIcon />
-			</span>
-		{/if}
 	</div>
+
+	{#if $isMobile && !$mobileMenuState}
+		<span class="gear" on:click={changeStats}>
+			<SettingIcon />
+		</span>
+	{/if}
 </div>
 
 <style>
@@ -59,6 +59,10 @@
 	@media (max-width: 768px) {
 		.stats-container {
 			width: 100vw;
+			overflow-x: hidden;
+		}
+		.holder {
+			transform: translateX(5%);
 		}
 	}
 
