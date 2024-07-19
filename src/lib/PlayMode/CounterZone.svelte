@@ -108,6 +108,9 @@
 		.counter-container {
 			width: 100vw;
 		}
+		.container {
+			border-top: none;
+		}
 		h2 {
 			font-size: 1.1rem;
 		}
