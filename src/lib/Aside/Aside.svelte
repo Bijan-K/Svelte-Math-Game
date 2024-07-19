@@ -36,7 +36,7 @@
 
 <style>
 	.aside {
-		height: 100vh;
+		height: 100dvh;
 		border-right: 1px solid #eee;
 		width: 20vw;
 		position: relative;

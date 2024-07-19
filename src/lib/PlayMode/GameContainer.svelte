@@ -342,7 +342,7 @@
 	.container {
 		position: relative;
 		width: 80vw;
-		height: 88vh;
+		height: 88dvh;
 		overflow: hidden;
 		background-color: transparent;
 	}

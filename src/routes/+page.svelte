@@ -14,7 +14,6 @@
 	onMount(() => {
 		windowWidth = window.innerWidth;
 		console.log('one');
-		console.log(showComponent);
 	});
 </script>
 
@@ -42,7 +41,7 @@
 		top: 0;
 		right: 0;
 		width: 80vw;
-		height: 100vh;
+		height: 100dvh;
 		z-index: 20;
 		background-color: #000;
 		overflow-y: scroll;

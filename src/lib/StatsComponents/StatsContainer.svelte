@@ -50,7 +50,7 @@
 		top: 0;
 		right: 0;
 		width: 80vw;
-		height: 100vh;
+		height: 100dvh;
 		z-index: 20;
 		overflow-y: scroll;
 		transition: all 0.5s;

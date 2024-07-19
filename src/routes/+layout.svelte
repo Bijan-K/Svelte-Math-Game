@@ -88,7 +88,7 @@
 	.app {
 		display: flex;
 		flex-direction: column;
-		min-height: 100vh;
+		min-height: 100dvh;
 	}
 
 	main {
@@ -106,7 +106,7 @@
 	.overlay-container {
 		position: fixed;
 		top: 0;
-		height: 100vh;
+		height: 100dvh;
 		width: 100vw;
 		display: flex;
 		flex-direction: column;
@@ -126,20 +126,20 @@
 	}
 	.block-container {
 		position: fixed;
-		height: 100vh;
+		height: 100dvh;
 		width: 100vw;
 		z-index: 20;
 	}
 	.block1 {
 		position: fixed;
-		height: 100vh;
+		height: 100dvh;
 		width: 100vw;
 		background-color: #0a0a0a;
 		top: -50%;
 	}
 	.block2 {
 		position: fixed;
-		height: 100vh;
+		height: 100dvh;
 		width: 100vw;
 		background-color: #0a0a0a;
 		top: 50%;
@@ -148,7 +148,7 @@
 	.block3 {
 		position: fixed;
 		top: 0;
-		height: 100vh;
+		height: 100dvh;
 		width: 100vw;
 		background-color: #0a0a0a;
 		right: 50%;
@@ -156,7 +156,7 @@
 	.block3::before {
 		--line: hsla(0, 0%, 95%, 0.25);
 		content: '';
-		height: 100vh;
+		height: 100dvh;
 		width: 100vw;
 		position: fixed;
 		background:
@@ -170,7 +170,7 @@
 	.block4 {
 		top: 0;
 		position: fixed;
-		height: 100vh;
+		height: 100dvh;
 		width: 100vw;
 		background-color: #0a0a0a;
 		left: +50%;
@@ -178,7 +178,7 @@
 	.block4::before {
 		--line: hsla(0, 0%, 95%, 0.25);
 		content: '';
-		height: 100vh;
+		height: 100dvh;
 		width: 100vw;
 		position: fixed;
 		background:

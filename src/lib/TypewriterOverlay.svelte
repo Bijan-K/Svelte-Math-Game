@@ -153,7 +153,7 @@
 	.tw-container {
 		position: fixed;
 		width: 100vw;
-		height: 100vh; /* Adjust this to your container's height */
+		height: 100dvh; /* Adjust this to your container's height */
 		border: 1px solid #000;
 		overflow: hidden;
 		z-index: 50;

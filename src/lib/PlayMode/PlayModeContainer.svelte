@@ -4,6 +4,7 @@
 	import SettingIcon from '../Icons/SettingIcon.svelte';
 
 	import { mobileMenuState, isMobile } from '$lib/stores.js';
+	import MobileNumpad from './MobileNumpad.svelte';
 
 	function changeStats() {
 		document.querySelector('.prime-container').classList.toggle('mobile-slide');
@@ -15,6 +16,10 @@
 	<div class="set">
 		<GameContainer />
 	</div>
+
+	{#if $isMobile}
+		<MobileNumpad />
+	{/if}
 
 	<CounterZone />
 
@@ -40,12 +45,12 @@
 		position: absolute;
 		top: 0;
 		right: 0;
-		height: 85vh;
+		height: 85dvh;
 		width: 80vw;
 	}
 	#playcontainerid {
 		width: 80vw;
-		height: 100vh;
+		height: 100dvh;
 		position: absolute;
 		top: 0;
 		right: 0;

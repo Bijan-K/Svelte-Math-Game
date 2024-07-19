@@ -60,8 +60,8 @@
 
 	.counter-container {
 		width: 80vw;
-		height: 12vh;
-		min-height: 12vh;
+		height: 12dvh;
+		min-height: 12dvh;
 		position: absolute;
 		bottom: 0;
 		right: 0;

@@ -80,7 +80,7 @@
 		height: 400px;
 		position: fixed;
 		width: 100vw;
-		height: 100vh;
+		height: 100dvh;
 		display: flex;
 		justify-content: center;
 		align-items: center;
