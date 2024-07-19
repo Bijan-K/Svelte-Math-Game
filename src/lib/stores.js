@@ -10,6 +10,8 @@ export let selectedDiff = writable(undefined);
 // Mobile
 export let mobileMenuState = writable(false);
 export let isMobile = writable(false);
+export let functionTriggerEnter = writable(false);
+export let functionTriggerInput = writable(false);
 
 // Things that get saved
 export let record = writable([

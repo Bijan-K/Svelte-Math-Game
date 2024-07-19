@@ -1,13 +1,13 @@
 <script>
 	import { onMount } from 'svelte';
 	import { fade, scale } from 'svelte/transition';
-	import { cache, record, missed_eq_list } from '$lib/stores.js';
+	import { cache, record, missed_eq_list, functionTriggerEnter } from '$lib/stores.js';
 	import { getTodaysDateFormatted } from '$lib/functions.js';
 
 	import GameOver from './GameOver.svelte';
 
-	const containerWidth = 800;
-	const containerHeight = 600;
+	let containerWidth = 800;
+	let containerHeight = 600;
 	const elementWidth = 100;
 	const elementHeight = 70;
 	const elementLifetime = 20000; // 20 seconds
@@ -284,11 +284,37 @@
 			cancelAnimationFrame(animationFrameId);
 		};
 	});
+
+	$: if ($functionTriggerEnter) {
+		const answer = parseInt($cache.userInput);
+		const correctElementIndex = elements.findIndex((el) => el.equation.answer === answer);
+		if (correctElementIndex !== -1) {
+			const correctElement = elements[correctElementIndex];
+			correctElement.state = 'correct';
+			score++;
+			cache.update((n) => ({ ...n, score: score }));
+			if (correctElement.isGolden) {
+				cache.update((c) => ({ ...c, hp: c.hp + 1 }));
+			}
+			setTimeout(() => {
+				elements = elements.filter((_, index) => index !== correctElementIndex);
+				setTimeout(spawnNewElement, 200);
+			}, 100);
+		}
+		userInput = '';
+		cache.update((n) => ({ ...n, userInput: userInput }));
+		functionTriggerEnter.update((n) => false);
+	}
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
 
-<div class="container" on:click={startGame}>
+<div
+	class="container"
+	bind:clientWidth={containerWidth}
+	bind:clientHeight={containerHeight}
+	on:click={startGame}
+>
 	{#if isGamePaused}
 		<div class="start-message" in:fade={{ duration: 200 }}>
 			<span>Select difficulty and Press Enter to Start</span>

@@ -1,5 +1,5 @@
 <script>
-	import { cache } from '$lib/stores.js';
+	import { cache, functionTriggerInput } from '$lib/stores.js';
 	import { fade, slide } from 'svelte/transition';
 	import Parallelogram from './Parallelogram.svelte';
 
@@ -13,6 +13,12 @@
 		} else {
 			toggleShow = true;
 		}
+	}
+
+	$: if ($functionTriggerInput) {
+		toggleShow = false;
+	} else {
+		toggleShow = true;
 	}
 </script>
 
@@ -70,11 +76,6 @@
 		align-items: center;
 		z-index: 3;
 	}
-	@media (max-width: 768px) {
-		.counter-container {
-			width: 100vw;
-		}
-	}
 
 	.container {
 		border-top: 1px #eee solid;
@@ -101,6 +102,18 @@
 
 	.high {
 		animation: flash 0.5s linear infinite alternate;
+	}
+
+	@media (max-width: 768px) {
+		.counter-container {
+			width: 100vw;
+		}
+		h2 {
+			font-size: 1.1rem;
+		}
+		.counter {
+			padding: 0.5rem 1.5rem;
+		}
 	}
 
 	@keyframes flash {

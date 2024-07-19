@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-	import { cache } from '$lib/stores.js';
+	import { cache, functionTriggerEnter, functionTriggerInput } from '$lib/stores.js';
 
 	let userInput = '';
 
@@ -8,9 +8,11 @@
 		if (value === 'enter') {
 			// Process the input here
 			userInput = '';
-			cache.update((n) => ({ ...n, userInput: userInput }));
+			functionTriggerEnter.update((n) => true);
+			functionTriggerInput.update((n) => true);
 		} else {
 			userInput += value;
+			functionTriggerInput.update((n) => false);
 			cache.update((n) => ({ ...n, userInput: userInput }));
 		}
 	}
@@ -48,7 +50,7 @@
 	}
 
 	button {
-		padding: 15px;
+		padding: calc(15px +1vh);
 		font-size: 1.2em;
 		border: none;
 		border: 1px white solid;
