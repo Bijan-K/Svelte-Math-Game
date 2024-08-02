@@ -229,7 +229,6 @@
 
 	function handleKeydown(event) {
 		if (isGamePaused && event.key === 'Enter' && $cache.diff !== 'Null') {
-			console.log('start was at 232');
 			startGame();
 			return;
 		}

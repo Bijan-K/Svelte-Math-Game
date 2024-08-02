@@ -26,9 +26,6 @@
 		});
 
 		function loadFromLocalStorage() {
-			const storedWords = localStorage.getItem('record');
-			const storedOther = localStorage.getItem('missed_eq_list');
-
 			if (storedWords) {
 				try {
 					record.set(JSON.parse(storedWords));
@@ -47,6 +44,9 @@
 		}
 
 		loadFromLocalStorage();
+
+		const storedWords = localStorage.getItem('record');
+		const storedOther = localStorage.getItem('missed_eq_list');
 	});
 </script>
 
