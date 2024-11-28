@@ -1,10 +1,10 @@
 <script>
-	import GithubIcon from '../Icons/GithubIcon.svelte';
-	import SettingIcon from '../Icons/SettingIcon.svelte';
+	import GithubIcon from '$lib/Icons/GithubIcon.svelte';
+	import SettingIcon from '$lib/Icons/SettingIcon.svelte';
 
 	import { mobileMenuState, isMobile } from '$lib/stores.js';
 
-	function changeStats() {
+	function changeStatus() {
 		document.querySelector('.prime-container').classList.toggle('mobile-slide');
 		mobileMenuState.update((n) => !n);
 	}
@@ -31,7 +31,7 @@
 		</footer>
 
 		{#if $isMobile && !$mobileMenuState}
-			<span class="gear" on:click={changeStats}>
+			<span class="menu" on:click={changeStatus}>
 				<SettingIcon />
 			</span>
 		{/if}
@@ -39,7 +39,7 @@
 </div>
 
 <style>
-	.gear {
+	.menu {
 		position: fixed;
 		bottom: 2rem;
 		left: 1.5rem;

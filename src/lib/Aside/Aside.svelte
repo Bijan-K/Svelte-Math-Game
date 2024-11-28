@@ -2,10 +2,8 @@
 	import { fade } from 'svelte/transition';
 	import { modeState } from '$lib/stores.js';
 	import PlayAside from './Components/PlayAside.svelte';
-	import StatsAside from './Components/StatsAside.svelte';
-	import AboutAside from './Components/AboutAside.svelte';
-	import MinusIcon from '../Icons/MinusIcon.svelte';
-	import AddIcon from '../Icons/AddIcon.svelte';
+	import MinusIcon from '$lib/Icons/MinusIcon.svelte';
+	import AddIcon from '$lib/Icons/AddIcon.svelte';
 	import AsideSetting from './AsideSetting.svelte';
 
 	$: $modeState;
@@ -24,9 +22,9 @@
 			{#if $modeState == 'play'}
 				<PlayAside />
 			{:else if $modeState == 'stats'}
-				<StatsAside />
+				<div></div>
 			{:else if $modeState == 'about'}
-				<AboutAside />
+				<div></div>
 			{/if}
 
 			<AsideSetting />

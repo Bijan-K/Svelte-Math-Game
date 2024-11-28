@@ -5,18 +5,38 @@
 
 	import { onMount } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
-	import { modeState, showOverlay, record, missed_eq_list } from '$lib/stores.js';
+	import { modeState, showOverlay, record, missed_eq_list, menuListIsClosed } from '$lib/stores.js';
 	import TagCloud from '../lib/TagCloud.svelte';
 	import TypewriterOverlay from '../lib/TypewriterOverlay.svelte';
 
-	function playHandler(e, e2) {
+	function playHandler(e) {
 		e.preventDefault();
 		showOverlay.set(false);
 		modeState.update((n) => e.target.id);
 	}
 
-	// Add to local storage save
 	onMount(() => {
+		const recordFromStorage = localStorage.getItem('record');
+		const missedEquationsFromStorage = localStorage.getItem('missed_eq_list');
+
+		// Load from localStorage first
+		if (recordFromStorage) {
+			try {
+				record.set(JSON.parse(recordFromStorage));
+			} catch (error) {
+				console.error('Error parsing stored words:', error);
+			}
+		}
+
+		if (missedEquationsFromStorage) {
+			try {
+				missed_eq_list.set(JSON.parse(missedEquationsFromStorage));
+			} catch (error) {
+				console.error('Error parsing stored other:', error);
+			}
+		}
+
+		// Then set up subscriptions to save to localStorage
 		record.subscribe((value) => {
 			localStorage.setItem('record', JSON.stringify(value));
 		});
@@ -24,29 +44,6 @@
 		missed_eq_list.subscribe((value) => {
 			localStorage.setItem('missed_eq_list', JSON.stringify(value));
 		});
-
-		function loadFromLocalStorage() {
-			if (storedWords) {
-				try {
-					record.set(JSON.parse(storedWords));
-				} catch (error) {
-					console.error('Error parsing stored words:', error);
-				}
-			}
-
-			if (storedOther) {
-				try {
-					missed_eq_list.set(JSON.parse(storedOther));
-				} catch (error) {
-					console.error('Error parsing stored other:', error);
-				}
-			}
-		}
-
-		loadFromLocalStorage();
-
-		const storedWords = localStorage.getItem('record');
-		const storedOther = localStorage.getItem('missed_eq_list');
 	});
 </script>
 
@@ -123,6 +120,8 @@
 	.overlay-container p {
 		font-size: 1.5rem;
 		text-align: center;
+		margin-left: 5%;
+		margin-right: 5%;
 	}
 	.block-container {
 		position: fixed;

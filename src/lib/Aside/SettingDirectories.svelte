@@ -2,7 +2,7 @@
 	import ArrowIcon from '../Icons/ArrowIcon.svelte';
 
 	import { slide } from 'svelte/transition';
-	import { mobileMenuState } from '$lib/stores.js';
+	import { mobileMenuState, menuListIsClosed } from '$lib/stores.js';
 	import { modeState } from '$lib/stores.js';
 
 	let isHovered = {
@@ -18,8 +18,13 @@
 		document.querySelector(`.about-dir`).classList.remove('underline');
 
 		document.querySelector(`.${mode}-dir`).classList.add('underline');
-		document.querySelector('.prime-container').classList.toggle('mobile-slide');
-		mobileMenuState.update((n) => !n);
+
+		if (mode !== 'play') {
+			document.querySelector('.prime-container').classList.toggle('mobile-slide');
+			mobileMenuState.update((n) => !n);
+			menuListIsClosed.update((n) => true);
+			document.querySelector('.menu').classList.toggle('spin');
+		}
 	}
 
 	function handleHover(parentId) {

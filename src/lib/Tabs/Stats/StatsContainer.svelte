@@ -2,11 +2,11 @@
 	import Records from './Records.svelte';
 	import Header from './Header.svelte';
 	import MappedEquations from './MappedEquations.svelte';
-	import SettingIcon from '../Icons/SettingIcon.svelte';
+	import SettingIcon from '$lib/Icons/SettingIcon.svelte';
 
 	import { mobileMenuState, isMobile } from '$lib/stores.js';
 
-	function changeStats() {
+	function changeStatus() {
 		document.querySelector('.prime-container').classList.toggle('mobile-slide');
 		mobileMenuState.update((n) => !n);
 	}
@@ -28,14 +28,14 @@
 	</div>
 
 	{#if $isMobile && !$mobileMenuState}
-		<span class="gear" on:click={changeStats}>
+		<span class="menu" on:click={changeStatus}>
 			<SettingIcon />
 		</span>
 	{/if}
 </div>
 
 <style>
-	.gear {
+	.menu {
 		position: fixed;
 		bottom: 2rem;
 		left: 1.5rem;
@@ -43,6 +43,7 @@
 		transition: all 0.5s ease;
 		transform: translateY(5%);
 		z-index: 21;
+		opacity: 0.6;
 	}
 
 	.stats-container {
@@ -61,13 +62,10 @@
 			width: 100vw;
 			overflow-x: hidden;
 		}
-		.holder {
-			transform: translateX(5%);
-		}
 	}
 
 	.holder {
-		padding: 0.75rem 2rem;
+		padding: 0.75rem 0.75rem;
 		display: flex;
 		gap: 2rem;
 		flex-direction: column;

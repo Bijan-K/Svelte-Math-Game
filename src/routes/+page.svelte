@@ -1,8 +1,8 @@
 <script>
 	import Aside from '$lib/Aside/Aside.svelte';
-	import PlayModeContainer from '$lib/PlayMode/PlayModeContainer.svelte';
-	import StatsContainer from '$lib/StatsComponents/StatsContainer.svelte';
-	import AboutContainer from '$lib/AboutComponents/AboutContainer.svelte';
+	import PlayModeContainer from '$lib/Tabs/Play/PlayModeContainer.svelte';
+	import StatsContainer from '$lib/Tabs/Stats/StatsContainer.svelte';
+	import AboutContainer from '$lib/Tabs/About/AboutContainer.svelte';
 
 	import { modeState, isMobile } from '$lib/stores.js';
 	import { onMount } from 'svelte';

@@ -1,12 +1,12 @@
 <script>
-	import CounterZone from '$lib/PlayMode/CounterZone.svelte';
+	import CounterZone from './CounterZone.svelte';
 	import GameContainer from './GameContainer.svelte';
-	import SettingIcon from '../Icons/SettingIcon.svelte';
+	import SettingIcon from '$lib/Icons/SettingIcon.svelte';
 
 	import { mobileMenuState, isMobile } from '$lib/stores.js';
 	import MobileNumpad from './MobileNumpad.svelte';
 
-	function changeStats() {
+	function changeStatus() {
 		document.querySelector('.prime-container').classList.toggle('mobile-slide');
 		mobileMenuState.update((n) => !n);
 	}
@@ -24,14 +24,14 @@
 	<CounterZone />
 
 	{#if $isMobile && !$mobileMenuState}
-		<span class="gear" on:click={changeStats}>
+		<span class="menu" on:click={changeStatus}>
 			<SettingIcon />
 		</span>
 	{/if}
 </div>
 
 <style>
-	.gear {
+	.menu {
 		position: fixed;
 		bottom: 2rem;
 		left: 1.5rem;

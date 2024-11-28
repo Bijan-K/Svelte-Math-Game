@@ -1,7 +1,7 @@
 <script>
 	// icons
-	import NotVisibleIcon from '../Icons/NotVisibleIcon.svelte';
-	import VisibleIcon from '../Icons/VisibleIcon.svelte';
+	import NotVisibleIcon from '$lib/Icons/NotVisibleIcon.svelte';
+	import VisibleIcon from '$lib/Icons/VisibleIcon.svelte';
 
 	import { flawsVisibility } from '$lib/stores.js';
 

@@ -1,24 +1,29 @@
 <script>
 	import SettingIcon from '$lib/Icons/SettingIcon.svelte';
-	import { settingOpen } from '$lib/stores.js';
+	import { menuListIsClosed, mobileMenuState } from '$lib/stores.js';
 	import { slide } from 'svelte/transition';
 
 	import SettingDirectories from './SettingDirectories.svelte';
 
-	function changeStats() {
-		settingOpen.update((n) => !n);
-		document.querySelector('.gear').classList.toggle('spin');
+	function changeStatus() {
+		if ($menuListIsClosed == false) {
+			document.querySelector('.prime-container').classList.toggle('mobile-slide');
+			mobileMenuState.update((n) => !n);
+		}
+
+		menuListIsClosed.update((n) => !n);
+		document.querySelector('.menu').classList.toggle('spin');
 	}
 </script>
 
 <div class="setting">
-	<span class="gear" on:click={changeStats}>
+	<span class="menu" on:click={changeStatus}>
 		<SettingIcon />
 	</span>
 
 	<div class="directories">
-		{#if $settingOpen}
-			<span in:slide={{ axis: 'y', duration: 200 }} on:click={changeStats}>Directories</span>
+		{#if $menuListIsClosed}
+			<span in:slide={{ axis: 'y', duration: 200 }} on:click={changeStatus}>Directories</span>
 		{:else}
 			<SettingDirectories />
 		{/if}
@@ -45,7 +50,7 @@
 		cursor: pointer;
 	}
 
-	.gear {
+	.menu {
 		position: absolute;
 		left: 10px;
 		bottom: 5px;

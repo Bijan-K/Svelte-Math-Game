@@ -4,7 +4,7 @@ import { writable } from 'svelte/store';
 export let modeState = writable(undefined);
 export let showOverlay = writable(true);
 export let flawsVisibility = writable(false);
-export let settingOpen = writable(true);
+export let menuListIsClosed = writable(true);
 export let selectedDiff = writable(undefined);
 
 // Mobile

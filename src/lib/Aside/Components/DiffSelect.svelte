@@ -1,5 +1,5 @@
 <script>
-	import { selectedDiff, cache } from '$lib/stores.js';
+	import { selectedDiff, cache, mobileMenuState, menuListIsClosed } from '$lib/stores.js';
 
 	let hp_data = {
 		ez: 5,
@@ -16,6 +16,12 @@
 			document.querySelector(`.${diff}`).classList.add(`active-${diff}`);
 			selectedDiff.update((n) => diff);
 			cache.update((n) => ({ ...n, diff: diff, hp: hp_data[diff] }));
+
+			document.querySelector('.prime-container').classList.toggle('mobile-slide');
+			mobileMenuState.update((n) => !n);
+
+			menuListIsClosed.update((n) => true);
+			document.querySelector('.menu').classList.toggle('spin');
 		}
 	}
 </script>

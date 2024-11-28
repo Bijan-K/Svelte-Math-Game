@@ -27,9 +27,26 @@
 </script>
 
 <div class="numpad">
-	{#each ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'enter'] as button}
-		<button on:click={() => handleInput(button)}>{button}</button>
-	{/each}
+	<div class="number-row">
+		<button on:click={() => handleInput('7')}>7</button>
+		<button on:click={() => handleInput('8')}>8</button>
+		<button on:click={() => handleInput('9')}>9</button>
+	</div>
+	<div class="number-row">
+		<button on:click={() => handleInput('4')}>4</button>
+		<button on:click={() => handleInput('5')}>5</button>
+		<button on:click={() => handleInput('6')}>6</button>
+	</div>
+	<div class="number-row">
+		<button on:click={() => handleInput('1')}>1</button>
+		<button on:click={() => handleInput('2')}>2</button>
+		<button on:click={() => handleInput('3')}>3</button>
+	</div>
+	<div class="number-row">
+		<button on:click={() => handleInput('-')}>-</button>
+		<button on:click={() => handleInput('0')}>0</button>
+		<button on:click={() => handleInput('enter')}>answer</button>
+	</div>
 </div>
 
 <style>
@@ -39,7 +56,7 @@
 
 		height: 20dvh;
 		display: grid;
-		grid-template-columns: repeat(4, 1fr);
+		grid-template-rows: repeat(4, 1fr);
 
 		gap: 5px;
 		width: 100dvw;
@@ -49,7 +66,14 @@
 		border-top: #e0e0e0 2px solid;
 	}
 
-	button {
+	.number-row {
+		display: flex;
+		width: 100%;
+		gap: 5px;
+	}
+
+	.number-row button {
+		flex: 1;
 		padding: calc(15px +1vh);
 		font-size: 1.2em;
 		border: none;
@@ -59,12 +83,13 @@
 		border-radius: 5px;
 		cursor: pointer;
 	}
-	button:active {
+
+	.number-row button:active {
 		background-color: #e0e0e0;
 	}
 
-	button:last-child {
-		grid-row: 1/3;
-		grid-column: 4/4;
+	/* Last row special handling */
+	.number-row:last-child button:nth-child(2) {
+		flex: 2;
 	}
 </style>
