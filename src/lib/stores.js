@@ -30,6 +30,11 @@ export let record = writable([
 		diff: 'high',
 		date: 'no record yet',
 		count: 0
+	},
+	{
+		diff: 'custom',
+		date: 'no record yet',
+		count: 0
 	}
 ]);
 export let missed_eq_list = writable([]);
@@ -40,5 +45,17 @@ export let cache = writable({
 	hp: 0,
 	score: 0,
 	gameState: false,
-	userInput: ''
+	userInput: '',
+	customConfig: null // Store custom difficulty configuration
 });
+
+// Default custom difficulty template
+export const defaultCustomConfig = {
+	healthBars: 3,
+	spawnInterval: 30000,
+	initialElements: 4,
+	operations: ['+', '-', '*'],
+	numberRanges: { min: 1, max: 50 },
+	complexityWeight: 1.2,
+	goldenChance: 0.15
+};

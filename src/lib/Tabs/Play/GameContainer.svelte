@@ -5,6 +5,7 @@
 	import EquationField from './EquationField.svelte';
 	import GameHUD from './GameHUD.svelte';
 	import InputManager from './InputManager.svelte';
+	import GameStartScreen from './GameStartScreen.svelte';
 	import GameOver from './GameOver.svelte';
 
 	// Game Engine reference and reactive state

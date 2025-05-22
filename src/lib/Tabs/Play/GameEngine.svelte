@@ -26,7 +26,8 @@
 			spawnInterval: 45000,
 			operations: ['+', '-', '*'],
 			numberRanges: { min: 1, max: 20 },
-			complexityWeight: 1.0
+			complexityWeight: 1.0,
+			goldenChance: 0.15
 		},
 		mid: {
 			initialElements: 4,
@@ -34,7 +35,8 @@
 			spawnInterval: 35000,
 			operations: ['+', '-', '*', '/', '%', '^'],
 			numberRanges: { min: 10, max: 100 },
-			complexityWeight: 1.5
+			complexityWeight: 1.5,
+			goldenChance: 0.15
 		},
 		high: {
 			initialElements: 6,
@@ -42,12 +44,18 @@
 			spawnInterval: 25000,
 			operations: ['+', '-', '*', '/', '%', '^', 'sqrt', 'multi'],
 			numberRanges: { min: 25, max: 999 },
-			complexityWeight: 2.0
+			complexityWeight: 2.0,
+			goldenChance: 0.15
 		}
 	};
 
-	$: currentConfig = $cache.diff ? difficultyConfig[$cache.diff] : null;
-	const goldenBoxChance = 0.15;
+	$: currentConfig =
+		$cache.diff === 'custom'
+			? $cache.customConfig
+			: $cache.diff
+				? difficultyConfig[$cache.diff]
+				: null;
+	const goldenBoxChance = currentConfig?.goldenChance || 0.15;
 
 	// Export reactive values for other components
 	export { elements, score, isGamePaused, isGameOver };
