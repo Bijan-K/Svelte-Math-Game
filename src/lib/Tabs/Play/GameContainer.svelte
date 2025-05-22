@@ -1,3 +1,4 @@
+<!-- src/lib/Tabs/Play/GameContainer.svelte -->
 <script>
 	import { onMount } from 'svelte';
 	import { fade, scale } from 'svelte/transition';
@@ -10,7 +11,6 @@
 	let containerHeight = 600;
 	const elementWidth = 100;
 	const elementHeight = 70;
-	const elementLifetime = 20000; // 20 seconds
 
 	let elements = [];
 	let idCounter = 0;
@@ -22,57 +22,198 @@
 	let lastSpawnTime;
 	let isGameOver = false;
 
+	// Enhanced difficulty configuration with sophisticated arithmetic
 	const difficultyConfig = {
 		ez: {
 			initialElements: 3,
 			healthBars: 5,
-			spawnInterval: 60000 // 1 minute
+			spawnInterval: 45000, // 45 seconds
+			operations: ['+', '-', '*'],
+			numberRanges: { min: 1, max: 20 },
+			complexityWeight: 1.0
 		},
 		mid: {
 			initialElements: 4,
 			healthBars: 3,
-			spawnInterval: 60000 // 1 minute
+			spawnInterval: 35000, // 35 seconds
+			operations: ['+', '-', '*', '/', '%', '^'],
+			numberRanges: { min: 10, max: 100 },
+			complexityWeight: 1.5
 		},
 		high: {
-			initialElements: 7,
+			initialElements: 6,
 			healthBars: 1,
-			spawnInterval: 20000 // 20 seconds
+			spawnInterval: 25000, // 25 seconds
+			operations: ['+', '-', '*', '/', '%', '^', 'sqrt', 'multi'],
+			numberRanges: { min: 25, max: 999 },
+			complexityWeight: 2.0
 		}
 	};
 
-	$: currentConfig = $cache.diff ? difficultyConfig[$cache.diff] : 'Null';
+	$: currentConfig = $cache.diff ? difficultyConfig[$cache.diff] : null;
 
-	const goldenBoxChance = 0.1; // 10% chance for a golden box
+	const goldenBoxChance = 0.15; // 15% chance for a golden box
+
+	// Safe math evaluator - replaces dangerous eval()
+	function safeMathEvaluate(expression) {
+		// Remove all whitespace
+		expression = expression.replace(/\s/g, '');
+
+		// Parse and validate the expression
+		const validPattern = /^[-+]?\d*\.?\d+([+\-*/%^][-+]?\d*\.?\d+)*$/;
+		if (!validPattern.test(expression)) {
+			throw new Error('Invalid mathematical expression');
+		}
+
+		try {
+			// Handle special cases
+			if (expression.includes('^')) {
+				expression = expression.replace(/(\d+)\^(\d+)/g, 'Math.pow($1, $2)');
+			}
+			if (expression.includes('%')) {
+				expression = expression.replace(/(\d+)%(\d+)/g, '($1 % $2)');
+			}
+
+			// Use Function constructor for safer evaluation
+			return new Function('return ' + expression)();
+		} catch (error) {
+			throw new Error('Mathematical evaluation failed');
+		}
+	}
+
+	// Calculate difficulty score for timing
+	function calculateDifficultyScore(equation) {
+		let score = 0;
+
+		// Operation complexity
+		const opComplexity = {
+			'+': 1,
+			'-': 1,
+			'*': 2,
+			'/': 3,
+			'%': 3,
+			'^': 4,
+			sqrt: 4
+		};
+		score += opComplexity[equation.operation] || 1;
+
+		// Number size complexity
+		const maxNum = Math.max(equation.a, equation.b || 0);
+		if (maxNum > 100) score += 2;
+		else if (maxNum > 50) score += 1;
+
+		// Multi-step complexity
+		if (equation.operation === 'multi') score += 3;
+
+		return score;
+	}
+
+	// Calculate element lifetime based on difficulty
+	function calculateElementLifetime(equation, baseTime = 20000) {
+		const difficultyScore = calculateDifficultyScore(equation);
+		const difficultyMultiplier = currentConfig?.complexityWeight || 1;
+
+		// More time for harder problems
+		const timeMultiplier = 1 + difficultyScore * 0.3 * difficultyMultiplier;
+		return Math.floor(baseTime * timeMultiplier);
+	}
 
 	function createEquation() {
-		const operations = ['+', '-', '*', '/'];
+		const config = currentConfig;
+		if (!config) return { a: 1, operation: '+', b: 1, answer: 2, difficulty: 1 };
+
+		const operations = config.operations;
 		const operation = operations[Math.floor(Math.random() * operations.length)];
-		let a, b, answer;
+		let a, b, answer, displayText;
+
+		const { min, max } = config.numberRanges;
 
 		switch (operation) {
 			case '+':
-				a = Math.floor(Math.random() * 30) + 1;
+				a = Math.floor(Math.random() * (max - min)) + min;
+				b = Math.floor(Math.random() * (max - min)) + min;
+				answer = a + b;
+				displayText = `${a} + ${b}`;
+				break;
+
+			case '-':
+				a = Math.floor(Math.random() * (max - min)) + min + 20;
+				b = Math.floor(Math.random() * Math.min(a - 1, max - min)) + min;
+				answer = a - b;
+				displayText = `${a} - ${b}`;
+				break;
+
+			case '*':
+				const maxFactor =
+					config === difficultyConfig.ez ? 12 : config === difficultyConfig.mid ? 25 : 50;
+				a = Math.floor(Math.random() * maxFactor) + 2;
+				b = Math.floor(Math.random() * maxFactor) + 2;
+				answer = a * b;
+				displayText = `${a} × ${b}`;
+				break;
+
+			case '/':
+				// Ensure clean division
+				const divisors =
+					config === difficultyConfig.mid
+						? [2, 3, 4, 5, 6, 8, 9, 10, 12, 15]
+						: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 24, 25];
+				b = divisors[Math.floor(Math.random() * divisors.length)];
+				answer = Math.floor(Math.random() * 20) + 2;
+				a = b * answer;
+				displayText = `${a} ÷ ${b}`;
+				break;
+
+			case '%':
+				a = Math.floor(Math.random() * 100) + 50;
+				b = Math.floor(Math.random() * 20) + 3;
+				answer = a % b;
+				displayText = `${a} % ${b}`;
+				break;
+
+			case '^':
+				a = Math.floor(Math.random() * 12) + 2;
+				b = Math.floor(Math.random() * 4) + 2;
+				answer = Math.pow(a, b);
+				displayText = `${a}^${b}`;
+				break;
+
+			case 'sqrt':
+				// Perfect squares only
+				const perfectSquares = [
+					4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144, 169, 196, 225, 256, 289, 324, 361, 400
+				];
+				a = perfectSquares[Math.floor(Math.random() * perfectSquares.length)];
+				answer = Math.sqrt(a);
+				displayText = `√${a}`;
+				break;
+
+			case 'multi':
+				// Multi-step operations
+				const step1_a = Math.floor(Math.random() * 20) + 5;
+				const step1_b = Math.floor(Math.random() * 10) + 2;
+				const step2_c = Math.floor(Math.random() * 15) + 3;
+				const intermediate = step1_a + step1_b;
+				answer = intermediate * step2_c;
+				displayText = `(${step1_a}+${step1_b})×${step2_c}`;
+				break;
+
+			default:
+				// Fallback
+				a = Math.floor(Math.random() * 20) + 1;
 				b = Math.floor(Math.random() * 20) + 1;
 				answer = a + b;
-				break;
-			case '-':
-				a = Math.floor(Math.random() * 30) + 20;
-				b = Math.floor(Math.random() * 20) + 1;
-				answer = a - b;
-				break;
-			case '*':
-				a = Math.floor(Math.random() * 10) + 1;
-				b = Math.floor(Math.random() * 10) + 1;
-				answer = a * b;
-				break;
-			case '/':
-				b = Math.floor(Math.random() * 9) + 2;
-				answer = Math.floor(Math.random() * 10) + 1;
-				a = b * answer;
-				break;
+				displayText = `${a} + ${b}`;
 		}
 
-		return { a, operation, b, answer };
+		return {
+			a,
+			operation,
+			b,
+			answer: Math.round(answer),
+			displayText: displayText || `${a} ${operation} ${b}`,
+			difficulty: calculateDifficultyScore({ a, operation, b })
+		};
 	}
 
 	function createRandomElement() {
@@ -85,6 +226,8 @@
 		} while (isOverlapping(x, y));
 
 		const isGolden = Math.random() < goldenBoxChance;
+		const elementLifetime = calculateElementLifetime(equation);
+
 		const newElement = {
 			id,
 			x,
@@ -92,6 +235,7 @@
 			progress: 100,
 			equation,
 			startTime: Date.now(),
+			lifetime: elementLifetime,
 			isGolden,
 			state: 'normal'
 		};
@@ -113,7 +257,7 @@
 		const now = Date.now();
 		elements = elements.map((element) => {
 			const elapsedTime = now - element.startTime;
-			const progress = Math.max(0, 100 - (elapsedTime / elementLifetime) * 100);
+			const progress = Math.max(0, 100 - (elapsedTime / element.lifetime) * 100);
 			const isExpiring = progress <= 25;
 			return { ...element, progress, isExpiring };
 		});
@@ -124,7 +268,12 @@
 		expiredElements.forEach((element) => {
 			missedEquations = [
 				...missedEquations,
-				`${element.equation.a} ${element.equation.operation} ${element.equation.b}`
+				{
+					equation: element.equation.displayText,
+					answer: element.equation.answer,
+					difficulty: element.equation.difficulty,
+					timestamp: Date.now()
+				}
 			];
 			cache.update((c) => ({ ...c, hp: c.hp - 1 }));
 			element.state = 'missed';
@@ -188,13 +337,15 @@
 			}
 		}
 
-		// Add misses to the collection of misses
+		// Process missed equations safely
 		function processEquations(equations) {
 			let formerList = $missed_eq_list;
 
 			const equationObjects = equations.map((eq) => ({
-				equation: eq,
-				answer: eval(eq),
+				equation: eq.equation,
+				answer: eq.answer,
+				difficulty: eq.difficulty,
+				timestamp: eq.timestamp,
 				times: 1
 			}));
 
@@ -204,8 +355,12 @@
 				const existingEq = acc.find((item) => item.equation === curr.equation);
 				if (existingEq) {
 					existingEq.times++;
+					existingEq.lastMissed = Math.max(existingEq.lastMissed || 0, curr.timestamp || 0);
 				} else {
-					acc.push(curr);
+					acc.push({
+						...curr,
+						lastMissed: curr.timestamp || Date.now()
+					});
 				}
 				return acc;
 			}, []);
@@ -329,13 +484,15 @@
 				class:golden={element.isGolden}
 				class:correct={element.state === 'correct'}
 				class:missed={element.state === 'missed'}
+				class:hard-problem={element.equation.difficulty >= 3}
 				style="left: {element.x}px; top: {element.y}px;"
 				in:fade={{ duration: 200 }}
 				out:fade={{ duration: 200 }}
 				animate:scale={{ start: element.state === 'correct' ? 1.2 : 0.8, duration: 500 }}
 			>
-				<div class="equation-top">{element.equation.a} {element.equation.operation}</div>
-				<div class="equation-bottom">{element.equation.b}</div>
+				<div class="equation-display">
+					{element.equation.displayText}
+				</div>
 				<div class="progress-bar">
 					<div
 						class="progress"
@@ -343,6 +500,9 @@
 						style="width: {element.progress}%;"
 					></div>
 				</div>
+				{#if element.equation.difficulty >= 3}
+					<div class="difficulty-indicator">★</div>
+				{/if}
 			</div>
 		{/each}
 	{/if}
@@ -381,39 +541,41 @@
 
 	.element {
 		position: absolute;
-		width: 100px;
-		height: 70px;
-		background-color: #121212;
+		width: 120px;
+		height: 80px;
+		background-color: #1a1a1a;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		flex-direction: column;
-		border-radius: 2px;
-		border: 1px solid white;
+		border-radius: 6px;
+		border: 2px solid #333;
 		color: white;
-		font-size: 18px;
-		padding: 5px;
+		font-size: 16px;
+		padding: 8px;
+		transition: all 0.3s ease;
 	}
-	.equation-top,
-	.equation-bottom {
+
+	.equation-display {
 		width: 100%;
 		text-align: center;
+		font-weight: 600;
+		margin-bottom: 6px;
+		font-family: 'Courier New', monospace;
 	}
-	.equation-top {
-		margin-bottom: 5px;
-	}
+
 	.progress-bar {
 		width: 100%;
-		height: 5px;
-		background-color: #555555;
-		border-radius: 2px;
+		height: 6px;
+		background-color: #444;
+		border-radius: 3px;
 		overflow: hidden;
-		margin-top: 5px;
+		margin-top: 4px;
 	}
 
 	.progress {
 		height: 100%;
-		background-color: #4caf50;
+		background: linear-gradient(90deg, #4caf50, #2196f3);
 		transition: width 0.1s linear;
 	}
 
@@ -421,31 +583,46 @@
 		animation: flash 0.5s linear infinite alternate;
 	}
 
+	.difficulty-indicator {
+		position: absolute;
+		top: 2px;
+		right: 4px;
+		color: #ffd700;
+		font-size: 12px;
+		font-weight: bold;
+	}
+
 	@keyframes flash {
 		0% {
-			background-color: #4caf50;
+			background: linear-gradient(90deg, #4caf50, #2196f3);
 		}
 		100% {
-			background-color: #ff0000;
+			background: linear-gradient(90deg, #ff4444, #ff8800);
 		}
 	}
 
 	.element.golden {
-		background-color: #ffd700;
+		background: linear-gradient(135deg, #ffd700, #ffed4e);
 		color: #000;
 		border-color: #daa520;
+		box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+	}
+
+	.element.hard-problem {
+		border-color: #9c27b0;
+		background-color: #2d1b69;
 	}
 
 	.element.correct {
-		background-color: #4caf50;
+		background: linear-gradient(135deg, #4caf50, #66bb6a);
 		border-color: #45a049;
 		transform: scale(120%);
 		transition: all 0.2s;
 	}
 
 	.element.missed {
-		background-color: #ff0000;
-		border-color: #cc0000;
+		background: linear-gradient(135deg, #f44336, #ef5350);
+		border-color: #d32f2f;
 		transform: scale(80%);
 		transition: all 0.2s;
 	}
