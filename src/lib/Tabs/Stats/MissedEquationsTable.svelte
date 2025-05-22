@@ -233,12 +233,27 @@
 		border-radius: 8px;
 		border: 1px solid rgba(255, 255, 255, 0.1);
 		background: rgba(255, 255, 255, 0.02);
+		width: 100%;
+		max-width: 100%;
 	}
 
 	.equations-table {
 		width: 100%;
+		min-width: 500px; /* Minimum width to prevent cramping */
 		border-collapse: collapse;
 		font-size: 0.9rem;
+	}
+
+	@media (max-width: 768px) {
+		.equations-table {
+			min-width: 450px; /* Allows horizontal scroll on very small screens */
+			font-size: 0.8rem;
+		}
+
+		.table-container {
+			width: 100%;
+			overflow-x: hidden;
+		}
 	}
 
 	.equations-table th {

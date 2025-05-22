@@ -196,11 +196,20 @@
 	@media (max-width: 768px) {
 		.analytics-grid {
 			grid-template-columns: 1fr;
+			gap: 0.75rem;
 		}
 
 		.stat-item.primary,
 		.stat-item.weakness {
 			grid-column: span 1;
+		}
+
+		.stat-value {
+			font-size: 1.5rem;
+		}
+
+		.operation-item {
+			padding: 0.5rem;
 		}
 	}
 </style>

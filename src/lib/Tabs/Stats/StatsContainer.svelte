@@ -121,6 +121,8 @@
 	@media (max-width: 768px) {
 		.stats-container {
 			width: 100vw;
+			left: 0;
+			right: auto;
 		}
 	}
 
@@ -159,6 +161,8 @@
 			'records analytics'
 			'chart chart'
 			'missed missed';
+		max-width: 100%;
+		box-sizing: border-box;
 	}
 
 	@media (max-width: 768px) {
@@ -171,6 +175,8 @@
 				'missed';
 			padding: 1rem;
 			gap: 1rem;
+			margin: 0;
+			width: 100%;
 		}
 	}
 
@@ -181,6 +187,18 @@
 		border: 1px solid #333;
 		transition: all 0.3s ease;
 		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+		min-width: 0; /* Prevents overflow in grid */
+		overflow: hidden; /* Ensures content doesn't overflow */
+	}
+
+	@media (max-width: 768px) {
+		.card {
+			padding: 1rem;
+			border-radius: 8px;
+			margin: 0;
+			width: 100%;
+			box-sizing: border-box;
+		}
 	}
 
 	.card:hover {
@@ -192,7 +210,7 @@
 	.card h2 {
 		font-size: 1.5rem;
 		font-weight: 600;
-		margin-bottom: 1rem;
+		margin-bottom: 2.5rem;
 		color: #f0f0f0;
 		font-family: 'Inter', sans-serif;
 	}
@@ -221,7 +239,7 @@
 		height: 56px;
 		border-radius: 50%;
 		border: 2px solid #555;
-		background: #222;
+		background: #000;
 		color: white;
 		font-size: 1.5rem;
 		cursor: pointer;
