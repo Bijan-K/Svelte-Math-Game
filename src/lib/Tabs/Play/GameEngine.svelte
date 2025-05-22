@@ -174,17 +174,35 @@
 		};
 	}
 
-	function createRandomElement(containerWidth = 800, containerHeight = 600) {
+	function createRandomElement(containerWidth = 800, containerHeight = 600, safeArea = null) {
 		const id = ++idCounter;
 		const equation = createEquation();
 		const elementWidth = 120;
 		const elementHeight = 80;
 
+		// Use safe area if provided, otherwise use full container
+		const spawnArea = safeArea || {
+			width: containerWidth - elementWidth,
+			height: containerHeight - elementHeight,
+			offsetX: 0,
+			offsetY: 0
+		};
+
 		let x, y;
+		let attempts = 0;
+		const maxAttempts = 50;
+
 		do {
-			x = Math.random() * (containerWidth - elementWidth);
-			y = Math.random() * (containerHeight - elementHeight);
-		} while (isOverlapping(x, y, elementWidth, elementHeight));
+			x = Math.random() * spawnArea.width + (spawnArea.offsetX || 0);
+			y = Math.random() * spawnArea.height + (spawnArea.offsetY || 0);
+			attempts++;
+		} while (isOverlapping(x, y, elementWidth, elementHeight) && attempts < maxAttempts);
+
+		// If we can't find a non-overlapping position, use a random one anyway
+		if (attempts >= maxAttempts) {
+			x = Math.random() * spawnArea.width + (spawnArea.offsetX || 0);
+			y = Math.random() * spawnArea.height + (spawnArea.offsetY || 0);
+		}
 
 		const isGolden = Math.random() < goldenBoxChance;
 		const elementLifetime = calculateElementLifetime(equation);
@@ -410,8 +428,8 @@
 		}
 	}
 
-	export function addElement(containerWidth, containerHeight) {
-		createRandomElement(containerWidth, containerHeight);
+	export function addElement(containerWidth, containerHeight, safeArea = null) {
+		createRandomElement(containerWidth, containerHeight, safeArea);
 	}
 
 	function gameLoop() {

@@ -7,7 +7,12 @@
 	export let onStartGame;
 
 	let showCustomPanel = false;
-	let selectedDifficulty = $cache.diff !== 'Null' ? $cache.diff : null;
+	let selectedDifficulty = null;
+
+	// Reset selected difficulty when component mounts
+	$: if ($cache.diff === 'Null') {
+		selectedDifficulty = null;
+	}
 
 	const difficulties = [
 		{
@@ -15,36 +20,49 @@
 			label: 'Easy',
 			description: 'Basic arithmetic with small numbers',
 			color: '#10b981',
-			details: '5 HP • 45s intervals • +, -, ×'
+			details: '5 HP • 45s intervals • +, -, ×',
+			hp: 5
 		},
 		{
 			id: 'mid',
 			label: 'Medium',
 			description: 'More operations and larger numbers',
 			color: '#f59e0b',
-			details: '3 HP • 35s intervals • +, -, ×, ÷, %, ^'
+			details: '3 HP • 35s intervals • +, -, ×, ÷, %, ^',
+			hp: 3
 		},
 		{
 			id: 'high',
 			label: 'Hard',
 			description: 'Complex operations and multi-step problems',
 			color: '#ef4444',
-			details: '1 HP • 25s intervals • All operations'
+			details: '1 HP • 25s intervals • All operations',
+			hp: 1
 		}
 	];
 
 	function selectDifficulty(diffId) {
 		selectedDifficulty = diffId;
-		cache.update((n) => ({ ...n, diff: diffId }));
+		const selectedDiff = difficulties.find((d) => d.id === diffId);
 
-		// Auto-start for quick play
-		if (diffId !== 'custom') {
-			setTimeout(() => {
-				if (selectedDifficulty === diffId) {
-					handleStartGame();
-				}
-			}, 500);
+		if (selectedDiff) {
+			cache.update((n) => ({
+				...n,
+				diff: diffId,
+				hp: selectedDiff.hp,
+				score: 0,
+				gameState: false,
+				userInput: '',
+				customConfig: null
+			}));
 		}
+
+		// Auto-start for quick play after a short delay
+		setTimeout(() => {
+			if (selectedDifficulty === diffId && !showCustomPanel) {
+				handleStartGame();
+			}
+		}, 500);
 	}
 
 	function openCustomPanel() {
@@ -57,13 +75,25 @@
 
 	function handleCustomApplied(customConfig) {
 		selectedDifficulty = 'custom';
-		cache.update((n) => ({ ...n, diff: 'custom', customConfig }));
+		cache.update((n) => ({
+			...n,
+			diff: 'custom',
+			customConfig,
+			hp: customConfig.healthBars,
+			score: 0,
+			gameState: false,
+			userInput: ''
+		}));
 		showCustomPanel = false;
-		setTimeout(handleStartGame, 300);
+
+		// Start game after custom config is applied
+		setTimeout(() => {
+			handleStartGame();
+		}, 300);
 	}
 
 	function handleStartGame() {
-		if (selectedDifficulty) {
+		if (selectedDifficulty && onStartGame) {
 			onStartGame();
 		}
 	}
@@ -74,7 +104,9 @@
 
 		if (event.key >= '1' && event.key <= '3') {
 			const diffIndex = parseInt(event.key) - 1;
-			selectDifficulty(difficulties[diffIndex].id);
+			if (difficulties[diffIndex]) {
+				selectDifficulty(difficulties[diffIndex].id);
+			}
 		} else if (event.key === '4') {
 			openCustomPanel();
 		} else if (event.key === 'Enter' && selectedDifficulty) {
@@ -163,17 +195,14 @@
 
 <style>
 	.start-screen {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: rgba(0, 0, 0, 0.95);
+		position: relative;
+		width: 100%;
+		height: 100%;
+		background: transparent;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		z-index: 100;
-		backdrop-filter: blur(8px);
 	}
 
 	.start-content {

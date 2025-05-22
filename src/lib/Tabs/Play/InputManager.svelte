@@ -22,7 +22,7 @@
 			return;
 		}
 
-		// Start game
+		// Start game - only if difficulty is selected and game is paused
 		if (isGamePaused && event.key === 'Enter' && $cache.diff !== 'Null') {
 			event.preventDefault();
 			if (document.querySelector('.equation-element')) {
@@ -35,8 +35,8 @@
 			return;
 		}
 
-		// Pause/Resume toggle
-		if (event.key === ' ') {
+		// Pause/Resume toggle - only during active gameplay
+		if (event.key === ' ' && $cache.diff !== 'Null') {
 			event.preventDefault();
 			if (!isGamePaused) {
 				onPauseGame();
@@ -46,8 +46,8 @@
 			return;
 		}
 
-		// Game input (only when game is active)
-		if (!isGamePaused) {
+		// Game input (only when game is active and not paused)
+		if (!isGamePaused && $cache.gameState) {
 			if ((event.key >= '0' && event.key <= '9') || (event.key === '-' && userInput === '')) {
 				event.preventDefault();
 				userInput += event.key;
@@ -58,20 +58,27 @@
 				cache.update((n) => ({ ...n, userInput: userInput }));
 			} else if (event.key === 'Enter') {
 				event.preventDefault();
-				onProcessInput(userInput);
-				userInput = '';
-				cache.update((n) => ({ ...n, userInput: userInput }));
+				if (userInput.trim() !== '') {
+					onProcessInput(userInput);
+					userInput = '';
+					cache.update((n) => ({ ...n, userInput: userInput }));
+				}
 			}
 		}
 	}
 
 	// Handle mobile trigger from numpad
 	$: if ($functionTriggerEnter) {
-		onProcessInput($cache.userInput);
-		userInput = '';
-		cache.update((n) => ({ ...n, userInput: '' }));
+		if ($cache.userInput.trim() !== '') {
+			onProcessInput($cache.userInput);
+			userInput = '';
+			cache.update((n) => ({ ...n, userInput: '' }));
+		}
 		functionTriggerEnter.update((n) => false);
 	}
+
+	// Sync userInput with cache
+	$: userInput = $cache.userInput || '';
 
 	onMount(() => {
 		window.addEventListener('keydown', handleKeydown);

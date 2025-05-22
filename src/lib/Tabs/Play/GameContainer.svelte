@@ -7,6 +7,7 @@
 	import InputManager from './InputManager.svelte';
 	import GameStartScreen from './GameStartScreen.svelte';
 	import GameOver from './GameOver.svelte';
+	import { cache } from '$lib/stores.js';
 
 	// Game Engine reference and reactive state
 	let gameEngine;
@@ -14,6 +15,11 @@
 	let score = 0;
 	let isGamePaused = true;
 	let isGameOver = false;
+
+	// Determine if we should show the start screen
+	$: showStartScreen =
+		isGamePaused && !isGameOver && ($cache.diff === 'Null' || elements.length === 0);
+	$: showPauseScreen = isGamePaused && !isGameOver && $cache.diff !== 'Null' && elements.length > 0;
 
 	// Handle spawn requests from engine
 	function handleSpawnRequest() {
@@ -28,7 +34,9 @@
 
 	// Game control handlers
 	function handleStartGame() {
-		if (gameEngine) gameEngine.startGame();
+		if (gameEngine && $cache.diff !== 'Null') {
+			gameEngine.startGame();
+		}
 	}
 
 	function handlePauseGame() {
@@ -40,7 +48,11 @@
 	}
 
 	function handleQuitGame() {
-		if (gameEngine) gameEngine.quitGame();
+		if (gameEngine) {
+			gameEngine.quitGame();
+			// Reset to show start screen again
+			elements = [];
+		}
 	}
 
 	function handleProcessInput(input) {
@@ -52,6 +64,11 @@
 		if (gameEngine && !isGamePaused && elements.length === 0) {
 			gameEngine.addElement(containerWidth, containerHeight);
 		}
+	}
+
+	// Handle difficulty selection and game start from GameStartScreen
+	function handleGameStart() {
+		handleStartGame();
 	}
 </script>
 
@@ -76,40 +93,33 @@
 		onProcessInput={handleProcessInput}
 	/>
 
-	{#if isGamePaused && !isGameOver}
+	<!-- Game Start Screen (difficulty selection) -->
+	{#if showStartScreen}
 		<div class="game-overlay" in:fade={{ duration: 200 }}>
-			{#if elements.length > 0}
-				<!-- Game is paused -->
-				<div class="pause-screen" role="dialog" aria-label="Game paused">
-					<div class="pause-content">
-						<h2>Game Paused</h2>
-						<p>Press <kbd>Enter</kbd> or <kbd>Space</kbd> to continue</p>
-						<p>Press <kbd>Escape</kbd> to quit</p>
+			<GameStartScreen onStartGame={handleGameStart} />
+		</div>
+	{:else if showPauseScreen}
+		<!-- Game Paused Screen -->
+		<div class="game-overlay" in:fade={{ duration: 200 }}>
+			<div class="pause-screen" role="dialog" aria-label="Game paused">
+				<div class="pause-content">
+					<h2>Game Paused</h2>
+					<p>Press <kbd>Enter</kbd> or <kbd>Space</kbd> to continue</p>
+					<p>Press <kbd>Escape</kbd> to quit</p>
 
-						<div class="pause-actions">
-							<button class="resume-btn" on:click={handleResumeGame} aria-label="Resume game">
-								Resume
-							</button>
-							<button class="quit-btn" on:click={handleQuitGame} aria-label="Quit current game">
-								Quit Game
-							</button>
-						</div>
-					</div>
-				</div>
-			{:else}
-				<!-- No game started -->
-				<div class="start-screen" role="dialog" aria-label="Start new game">
-					<div class="start-content">
-						<h2>Ready to Play?</h2>
-						<p>Select a difficulty and press <kbd>Enter</kbd> to start</p>
-						<button class="start-btn" on:click={handleStartGame} aria-label="Start new game">
-							Start Game
+					<div class="pause-actions">
+						<button class="resume-btn" on:click={handleResumeGame} aria-label="Resume game">
+							Resume
+						</button>
+						<button class="quit-btn" on:click={handleQuitGame} aria-label="Quit current game">
+							Quit Game
 						</button>
 					</div>
 				</div>
-			{/if}
+			</div>
 		</div>
 	{:else if isGameOver}
+		<!-- Game Over Screen -->
 		<div class="game-overlay" in:fade={{ duration: 200 }}>
 			<GameOver />
 		</div>
@@ -119,7 +129,7 @@
 	<EquationField {elements} onElementSpawn={handleElementSpawn} />
 
 	<!-- HUD (health bars, pause button) -->
-	{#if !isGamePaused || elements.length > 0}
+	{#if !showStartScreen && !isGameOver}
 		<GameHUD
 			{isGamePaused}
 			onPause={handlePauseGame}
@@ -152,8 +162,7 @@
 		backdrop-filter: blur(4px);
 	}
 
-	.pause-screen,
-	.start-screen {
+	.pause-screen {
 		text-align: center;
 		padding: 2rem;
 		background: rgba(0, 0, 0, 0.9);
@@ -164,15 +173,13 @@
 		width: 90%;
 	}
 
-	.pause-content h2,
-	.start-content h2 {
+	.pause-content h2 {
 		font-size: 2rem;
 		margin-bottom: 1rem;
 		color: #fff;
 	}
 
-	.pause-content p,
-	.start-content p {
+	.pause-content p {
 		font-size: 1.1rem;
 		margin-bottom: 1rem;
 		color: #ccc;
@@ -197,8 +204,7 @@
 	}
 
 	.resume-btn,
-	.quit-btn,
-	.start-btn {
+	.quit-btn {
 		padding: 0.75rem 1.5rem;
 		border: 2px solid;
 		background: transparent;
@@ -209,14 +215,12 @@
 		transition: all 0.3s ease;
 	}
 
-	.resume-btn,
-	.start-btn {
+	.resume-btn {
 		border-color: #22c55e;
 		color: #22c55e;
 	}
 
-	.resume-btn:hover,
-	.start-btn:hover {
+	.resume-btn:hover {
 		background: #22c55e;
 		color: #000;
 	}
@@ -237,14 +241,12 @@
 			height: 68dvh;
 		}
 
-		.pause-screen,
-		.start-screen {
+		.pause-screen {
 			padding: 1.5rem;
 			margin: 1rem;
 		}
 
-		.pause-content h2,
-		.start-content h2 {
+		.pause-content h2 {
 			font-size: 1.5rem;
 		}
 

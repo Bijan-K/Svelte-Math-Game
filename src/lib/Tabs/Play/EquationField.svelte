@@ -1,27 +1,47 @@
 <!-- src/lib/Tabs/Play/EquationField.svelte -->
 <script>
 	import { fade, scale } from 'svelte/transition';
+	import ResponsiveEquationSpawner from './ResponsiveEquationSpawner.svelte';
 
 	export let elements = [];
 	export let onElementSpawn;
+	export let useDeviceKeyboard = false;
 
 	let containerWidth = 800;
 	let containerHeight = 600;
+	let safeSpawnArea = null;
+	let spawner;
 
-	// Notify parent when container dimensions change
-	$: if (containerWidth && containerHeight) {
-		onElementSpawn(containerWidth, containerHeight);
+	// Handle viewport changes from ResponsiveEquationSpawner
+	function handleViewportChange(newSafeArea) {
+		safeSpawnArea = newSafeArea;
+		containerWidth = newSafeArea.availableWidth;
+		containerHeight = newSafeArea.availableHeight;
+
+		// Notify parent with safe spawn dimensions
+		if (onElementSpawn) {
+			onElementSpawn(newSafeArea.width, newSafeArea.height, newSafeArea);
+		}
 	}
+
+	// Adjust field height when device keyboard is used
+	$: fieldStyle =
+		useDeviceKeyboard && spawner?.isKeyboardVisible()
+			? `height: calc(100% - 100px); transform: translateY(0);`
+			: `height: 100%; transform: translateY(0);`;
 </script>
+
+<ResponsiveEquationSpawner bind:this={spawner} onViewportChange={handleViewportChange} />
 
 <div
 	class="equation-field"
+	style={fieldStyle}
 	bind:clientWidth={containerWidth}
 	bind:clientHeight={containerHeight}
 	role="main"
 	aria-label="Game field with math equations"
 >
-	{#each elements as element (element.id)}
+	{#each elements.filter((element) => !safeSpawnArea || (element.x >= (safeSpawnArea.offsetX || 0) && element.x <= safeSpawnArea.width + (safeSpawnArea.offsetX || 0) && element.y >= (safeSpawnArea.offsetY || 0) && element.y <= safeSpawnArea.height + (safeSpawnArea.offsetY || 0))) as element (element.id)}
 		<div
 			class="equation-element"
 			class:golden={element.isGolden}
