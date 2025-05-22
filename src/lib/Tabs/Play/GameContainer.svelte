@@ -314,6 +314,49 @@
 		}
 	}
 
+	function pauseGame() {
+		if (!isGamePaused) {
+			isGamePaused = true;
+			cancelAnimationFrame(animationFrameId);
+			cache.update((n) => ({ ...n, gameState: false }));
+		}
+	}
+
+	function resumeGame() {
+		if (isGamePaused && elements.length > 0) {
+			isGamePaused = false;
+			cache.update((n) => ({ ...n, gameState: true }));
+			// Reset timing for existing elements
+			const now = Date.now();
+			elements = elements.map((element) => ({
+				...element,
+				startTime: now - ((100 - element.progress) / 100) * element.lifetime
+			}));
+			gameLoop();
+		}
+	}
+
+	function quitGame() {
+		if (!isGamePaused) {
+			pauseGame();
+		}
+
+		// Reset everything without saving stats
+		cancelAnimationFrame(animationFrameId);
+		elements = [];
+		score = 0;
+		missedEquations = [];
+		isGamePaused = true;
+
+		cache.update((n) => ({
+			...n,
+			hp: 0,
+			score: 0,
+			gameState: false,
+			userInput: ''
+		}));
+	}
+
 	function endGame() {
 		isGameOver = true;
 		cache.update((n) => ({ ...n, gameState: false }));
@@ -388,6 +431,18 @@
 			return;
 		}
 
+		// Allow resume with Enter when paused mid-game
+		if (isGamePaused && event.key === 'Enter' && elements.length > 0) {
+			resumeGame();
+			return;
+		}
+
+		// Quit game with Escape
+		if (event.key === 'Escape' && !isGamePaused) {
+			quitGame();
+			return;
+		}
+
 		if (!isGamePaused) {
 			if ((event.key >= '0' && event.key <= '9') || (event.key === '-' && userInput === '')) {
 				userInput += event.key;
@@ -432,8 +487,28 @@
 	}
 
 	onMount(() => {
+		// Handle visibility changes (tab switching, window minimizing, etc.)
+		function handleVisibilityChange() {
+			if (document.hidden && !isGamePaused) {
+				// Pause the game when tab becomes hidden
+				pauseGame();
+			}
+		}
+
+		// Handle window blur (losing focus)
+		function handleWindowBlur() {
+			if (!isGamePaused) {
+				pauseGame();
+			}
+		}
+
+		document.addEventListener('visibilitychange', handleVisibilityChange);
+		window.addEventListener('blur', handleWindowBlur);
 		window.addEventListener('keydown', handleKeydown);
+
 		return () => {
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
+			window.removeEventListener('blur', handleWindowBlur);
 			window.removeEventListener('keydown', handleKeydown);
 			cancelAnimationFrame(animationFrameId);
 		};
@@ -471,13 +546,27 @@
 >
 	{#if isGamePaused}
 		<div class="start-message" in:fade={{ duration: 200 }}>
-			<span>Select difficulty and Press Enter to Start</span>
+			{#if elements.length > 0}
+				<div class="pause-menu">
+					<h2>Game Paused</h2>
+					<p>Press Enter to continue or Escape to quit</p>
+					<div class="pause-buttons">
+						<button class="resume-btn" on:click={resumeGame}>Resume</button>
+						<button class="quit-btn" on:click={quitGame}>Quit Game</button>
+					</div>
+				</div>
+			{:else}
+				<span>Select difficulty and Press Enter to Start</span>
+			{/if}
 		</div>
 	{:else if isGameOver}
 		<div class="start-message" in:fade={{ duration: 200 }}>
 			<GameOver />
 		</div>
 	{:else}
+		<!-- Game UI with quit button -->
+		<button class="quit-button" on:click={quitGame} title="Quit Game (Escape)"> ✕ </button>
+
 		{#each elements as element (element.id)}
 			<div
 				class="element"
@@ -625,5 +714,84 @@
 		border-color: #d32f2f;
 		transform: scale(80%);
 		transition: all 0.2s;
+	}
+
+	.quit-button {
+		position: absolute;
+		top: 20px;
+		right: 20px;
+		width: 40px;
+		height: 40px;
+		border: 2px solid #fff;
+		background: rgba(0, 0, 0, 0.7);
+		color: white;
+		border-radius: 50%;
+		font-size: 18px;
+		font-weight: bold;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.3s ease;
+		z-index: 100;
+	}
+
+	.quit-button:hover {
+		background: rgba(255, 255, 255, 0.2);
+		transform: scale(1.1);
+	}
+
+	.quit-button:active {
+		transform: scale(0.9);
+	}
+
+	.pause-menu {
+		text-align: center;
+		padding: 2rem;
+		background: rgba(0, 0, 0, 0.9);
+		border: 2px solid #fff;
+		border-radius: 12px;
+		max-width: 400px;
+	}
+
+	.pause-menu h2 {
+		font-size: 2rem;
+		margin-bottom: 1rem;
+		color: #fff;
+	}
+
+	.pause-menu p {
+		font-size: 1.1rem;
+		margin-bottom: 2rem;
+		color: #ccc;
+	}
+
+	.pause-buttons {
+		display: flex;
+		gap: 1rem;
+		justify-content: center;
+	}
+
+	.resume-btn,
+	.quit-btn {
+		padding: 0.75rem 1.5rem;
+		border: 2px solid #fff;
+		background: transparent;
+		color: #fff;
+		border-radius: 6px;
+		font-size: 1rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.3s ease;
+	}
+
+	.resume-btn:hover {
+		background: #fff;
+		color: #000;
+	}
+
+	.quit-btn:hover {
+		background: #333;
+		border-color: #999;
 	}
 </style>
