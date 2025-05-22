@@ -1,3 +1,4 @@
+<!-- src/lib/Tabs/Play/HealthBars.svelte -->
 <script>
 	import { onMount } from 'svelte';
 	import { tweened } from 'svelte/motion';

@@ -1,3 +1,4 @@
+<!-- src/lib/Aside/Components/DiffSelect.svelte -->
 <script>
 	import { selectedDiff, cache, mobileMenuState, menuListIsClosed } from '$lib/stores.js';
 

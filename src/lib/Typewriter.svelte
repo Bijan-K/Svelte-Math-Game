@@ -1,3 +1,4 @@
+<!-- src/lib/Typewriter.svelte -->
 <script>
 	export let text = '';
 	export let speed = 75;

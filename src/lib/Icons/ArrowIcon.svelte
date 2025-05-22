@@ -1,3 +1,4 @@
+<!-- src/lib/Icons/ArrowIcon.svelte -->
 <svg
 	style="transform: translateY(10%) scale(60%);"
 	xmlns="http://www.w3.org/2000/svg"

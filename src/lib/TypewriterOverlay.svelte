@@ -1,3 +1,4 @@
+<!-- src/lib/TypewriterOverlay.svelte -->
 <script>
 	import { onMount, tick, onDestroy } from 'svelte';
 	import Typewriter from './Typewriter.svelte';

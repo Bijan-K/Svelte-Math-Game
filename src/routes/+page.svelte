@@ -1,3 +1,4 @@
+<!-- src/routes/+page.svelte -->
 <script>
 	import Aside from '$lib/Aside/Aside.svelte';
 	import PlayModeContainer from '$lib/Tabs/Play/PlayModeContainer.svelte';

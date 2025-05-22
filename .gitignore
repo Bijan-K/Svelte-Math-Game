@@ -1,3 +1,7 @@
+# location comments 
+process_sveltekit_files.py
+files/
+
 .DS_Store
 node_modules
 /build

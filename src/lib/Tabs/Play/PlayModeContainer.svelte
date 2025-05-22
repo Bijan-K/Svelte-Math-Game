@@ -1,3 +1,4 @@
+<!-- src/lib/Tabs/Play/PlayModeContainer.svelte -->
 <script>
 	import CounterZone from './CounterZone.svelte';
 	import GameContainer from './GameContainer.svelte';

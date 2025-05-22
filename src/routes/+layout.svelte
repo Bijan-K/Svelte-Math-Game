@@ -1,3 +1,4 @@
+<!-- src/routes/+layout.svelte -->
 <script>
 	import './globals.css';
 	import './scrollbar.css';

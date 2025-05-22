@@ -1,3 +1,4 @@
+<!-- src/lib/Tabs/About/AboutContainer.svelte -->
 <script>
 	import GithubIcon from '$lib/Icons/GithubIcon.svelte';
 	import SettingIcon from '$lib/Icons/SettingIcon.svelte';

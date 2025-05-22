@@ -1,3 +1,4 @@
+<!-- src/lib/Icons/VisibleIcon.svelte -->
 <svg
 	style="transform: translateY(25%) scale(160%)"
 	xmlns="http://www.w3.org/2000/svg"

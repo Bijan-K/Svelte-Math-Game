@@ -1,3 +1,4 @@
+<!-- src/lib/Aside/Components/PlayAside.svelte -->
 <script>
 	import { fade } from 'svelte/transition';
 	import DiffSelect from './DiffSelect.svelte';

@@ -1,3 +1,4 @@
+<!-- src/lib/Tabs/Stats/Records.svelte -->
 <script>
 	import { record } from '$lib/stores.js';
 </script>

@@ -1,3 +1,4 @@
+<!-- src/lib/Tabs/Play/CounterZone.svelte -->
 <script>
 	import { cache, functionTriggerInput } from '$lib/stores.js';
 	import { fade, slide } from 'svelte/transition';

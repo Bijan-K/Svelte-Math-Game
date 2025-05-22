@@ -1,3 +1,4 @@
+<!-- src/lib/TagCloud.svelte -->
 <script>
 	import { onMount } from 'svelte';
 	import TagCloud from 'tagcloud';

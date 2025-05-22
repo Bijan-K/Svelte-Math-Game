@@ -1,3 +1,4 @@
+// src/lib/functions.js
 export function getTodaysDateFormatted() {
 	const date = new Date();
 	const months = [
