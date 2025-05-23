@@ -1,4 +1,4 @@
-<!-- src/lib/Aside/Components/PlayAside.svelte -->
+<!-- src/lib/aside/Components/PlayAside.svelte -->
 <script>
 	import { fade } from 'svelte/transition';
 	import { cache } from '$lib/stores.js';
@@ -81,12 +81,6 @@
 			<li><kbd>1-4</kbd> - Select difficulty</li>
 		</ul>
 	</div>
-
-	{#if !currentDiff}
-		<div class="help-text">
-			<p>Click in the game area to select difficulty and start playing!</p>
-		</div>
-	{/if}
 </div>
 
 <style>

@@ -1,4 +1,4 @@
-<!-- src/lib/Tabs/Play/GameContainer.svelte -->
+<!-- src/lib/tabs/play/GameContainer.svelte -->
 <script>
 	import { fade } from 'svelte/transition';
 	import GameEngine from './GameEngine.svelte';

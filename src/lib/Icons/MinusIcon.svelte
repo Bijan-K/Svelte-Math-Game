@@ -1,4 +1,4 @@
-<!-- src/lib/Icons/MinusIcon.svelte -->
+<!-- src/lib/icons/MinusIcon.svelte -->
 <svg
 	style="transform: translateY(12%);"
 	xmlns="http://www.w3.org/2000/svg"

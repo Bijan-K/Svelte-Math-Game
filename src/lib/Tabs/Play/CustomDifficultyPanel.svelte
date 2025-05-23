@@ -1,4 +1,4 @@
-<!-- src/lib/Tabs/Play/CustomDifficultyPanel.svelte -->
+<!-- src/lib/tabs/play/CustomDifficultyPanel.svelte -->
 <script>
 	import { fade, slide } from 'svelte/transition';
 

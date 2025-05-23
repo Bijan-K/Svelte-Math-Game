@@ -1,4 +1,4 @@
-<!-- src/lib/Tabs/Play/GameOver.svelte -->
+<!-- src/lib/tabs/play/GameOver.svelte -->
 <script>
 	import { onMount } from 'svelte';
 	import { tweened } from 'svelte/motion';

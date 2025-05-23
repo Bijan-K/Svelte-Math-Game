@@ -1,4 +1,4 @@
-<!-- src/lib/Aside/SettingDirectories.svelte -->
+<!-- src/lib/aside/SettingDirectories.svelte -->
 <script>
 	import ArrowIcon from '../Icons/ArrowIcon.svelte';
 

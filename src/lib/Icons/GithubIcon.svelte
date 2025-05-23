@@ -1,4 +1,4 @@
-<!-- src/lib/Icons/GithubIcon.svelte -->
+<!-- src/lib/icons/GithubIcon.svelte -->
 <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 15 15" {...$$props}
 	><path
 		fill="currentColor"

@@ -1,4 +1,4 @@
-<!-- src/lib/Tabs/Play/GameEngine.svelte -->
+<!-- src/lib/tabs/play/GameEngine.svelte -->
 <script>
 	import { createEventDispatcher, onMount, onDestroy } from 'svelte';
 	import { cache, record, missed_eq_list } from '$lib/stores.js';

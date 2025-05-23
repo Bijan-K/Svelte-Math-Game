@@ -1,4 +1,4 @@
-<!-- src/lib/Tabs/Play/MobileNumpad.svelte -->
+<!-- src/lib/tabs/play/MobileNumpad.svelte -->
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import { cache, functionTriggerEnter, functionTriggerInput } from '$lib/stores.js';

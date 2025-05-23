@@ -1,4 +1,4 @@
-<!-- src/lib/Tabs/Play/ResponsiveEquationSpawner.svelte -->
+<!-- src/lib/tabs/play/ResponsiveEquationSpawner.svelte -->
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import { isMobile } from '$lib/stores.js';

@@ -1,4 +1,4 @@
-<!-- src/lib/Aside/AsideSetting.svelte -->
+<!-- src/lib/aside/AsideSetting.svelte -->
 <script>
 	import SettingIcon from '$lib/Icons/SettingIcon.svelte';
 	import { menuListIsClosed, mobileMenuState } from '$lib/stores.js';

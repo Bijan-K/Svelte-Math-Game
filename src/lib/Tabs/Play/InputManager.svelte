@@ -1,4 +1,4 @@
-<!-- src/lib/Tabs/Play/InputManager.svelte -->
+<!-- src/lib/tabs/play/InputManager.svelte -->
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import { cache, functionTriggerEnter } from '$lib/stores.js';

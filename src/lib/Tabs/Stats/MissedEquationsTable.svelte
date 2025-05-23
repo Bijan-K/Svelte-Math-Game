@@ -1,4 +1,4 @@
-<!-- src/lib/Tabs/Stats/MissedEquationsTable.svelte -->
+<!-- src/lib/tabs/stats/MissedEquationsTable.svelte -->
 <script>
 	import { missed_eq_list } from '$lib/stores.js';
 	import VisibleIcon from '$lib/Icons/VisibleIcon.svelte';

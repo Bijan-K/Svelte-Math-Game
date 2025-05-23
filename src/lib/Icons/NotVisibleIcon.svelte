@@ -1,4 +1,4 @@
-<!-- src/lib/Icons/NotVisibleIcon.svelte -->
+<!-- src/lib/icons/NotVisibleIcon.svelte -->
 <svg
 	style="transform: translateY(25%) scale(160%)"
 	xmlns="http://www.w3.org/2000/svg"

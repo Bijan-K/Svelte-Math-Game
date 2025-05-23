@@ -1,4 +1,4 @@
-<!-- src/lib/Tabs/Play/Parallelogram.svelte -->
+<!-- src/lib/tabs/play/Parallelogram.svelte -->
 <script>
 	export let width = 20;
 	export let height = 40;

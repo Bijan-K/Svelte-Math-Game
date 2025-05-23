@@ -1,4 +1,4 @@
-<!-- src/lib/Tabs/Play/GameStartScreen.svelte -->
+<!-- src/lib/tabs/play/GameStartScreen.svelte -->
 <script>
 	import { fade, scale } from 'svelte/transition';
 	import { cache } from '$lib/stores.js';

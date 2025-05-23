@@ -1,4 +1,4 @@
-<!-- src/lib/Aside/Aside.svelte -->
+<!-- src/lib/aside/Aside.svelte -->
 <script>
 	import { fade } from 'svelte/transition';
 	import { modeState } from '$lib/stores.js';

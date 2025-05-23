@@ -1,4 +1,4 @@
-<!-- src/lib/Tabs/Stats/AnalyticsPanel.svelte -->
+<!-- src/lib/tabs/stats/AnalyticsPanel.svelte -->
 <script>
 	export let stats;
 

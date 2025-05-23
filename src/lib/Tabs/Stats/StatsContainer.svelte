@@ -1,4 +1,4 @@
-<!-- src/lib/Tabs/Stats/StatsContainer.svelte -->
+<!-- src/lib/tabs/stats/StatsContainer.svelte -->
 <script>
 	import Records from './Records.svelte';
 	import AnalyticsPanel from './AnalyticsPanel.svelte';

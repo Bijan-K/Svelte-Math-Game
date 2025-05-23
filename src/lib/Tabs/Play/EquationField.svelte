@@ -1,4 +1,4 @@
-<!-- src/lib/Tabs/Play/EquationField.svelte -->
+<!-- src/lib/tabs/play/EquationField.svelte -->
 <script>
 	import { fade, scale } from 'svelte/transition';
 	import ResponsiveEquationSpawner from './ResponsiveEquationSpawner.svelte';

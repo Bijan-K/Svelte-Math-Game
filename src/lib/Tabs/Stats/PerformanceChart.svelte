@@ -1,4 +1,4 @@
-<!-- src/lib/Tabs/Stats/PerformanceChart.svelte -->
+<!-- src/lib/tabs/stats/PerformanceChart.svelte -->
 <script>
 	export let stats;
 

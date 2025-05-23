@@ -1,4 +1,4 @@
-<!-- src/lib/Tabs/Play/GameHUD.svelte -->
+<!-- src/lib/tabs/play/GameHUD.svelte -->
 <script>
 	import { fade, slide } from 'svelte/transition';
 	import { cache } from '$lib/stores.js';

@@ -1,4 +1,4 @@
-<!-- src/lib/Aside/Components/DiffSelect.svelte -->
+<!-- src/lib/aside/Components/DiffSelect.svelte -->
 <script>
 	import { cache, mobileMenuState, menuListIsClosed } from '$lib/stores.js';
 
