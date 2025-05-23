@@ -1,30 +1,31 @@
-<!-- src/lib/tabs/play/input/MobileNumpad.svelte -->
+<!-- src/lib/tabs/play/input/MobileNumpad.svelte - UPDATED -->
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import { cache } from '$lib/stores.js';
 	import { viewport } from '../layout/viewportStore.js';
 	import { fade, slide } from 'svelte/transition';
+	import { inputStateMachine } from './InputStateMachine.js';
 
 	export let onRequestKeyboard = () => {};
 	export let onProcessInput = () => {};
 	export let useDeviceKeyboard = false;
 
-	let userInput = '';
+	// Input state from state machine
+	let inputState = inputStateMachine.getState();
+	let unsubscribeInput = null;
+
+	// Device input element reference
 	let inputElement;
 
 	// Get difficulty-based theming
 	$: difficultyTheme = getDifficultyTheme($cache.diff);
-	$: showNumpad = $viewport.isMobile && $cache.gameState && !useDeviceKeyboard;
 
-	function getDifficultyTheme(diff) {
-		const themes = {
-			ez: { primary: '#10b981', secondary: '#065f46', accent: '#34d399' },
-			mid: { primary: '#f59e0b', secondary: '#92400e', accent: '#fbbf24' },
-			high: { primary: '#ef4444', secondary: '#991b1b', accent: '#f87171' },
-			custom: { primary: '#8b5cf6', secondary: '#5b21b6', accent: '#a78bfa' }
-		};
-		return themes[diff] || themes.ez;
-	}
+	// Show numpad when on mobile and game is active
+	$: showNumpad = $viewport.isMobile && $cache.gameState;
+
+	// Determine current mode from state machine
+	$: isNumpadMode = inputState.mode === 'mobile-numpad';
+	$: isKeyboardMode = inputState.mode === 'mobile-keyboard';
 
 	// Numpad layout - traditional phone style
 	const numpadLayout = [
@@ -50,95 +51,130 @@
 		]
 	];
 
+	onMount(() => {
+		// Subscribe to input state machine
+		unsubscribeInput = inputStateMachine.subscribe((state) => {
+			inputState = state;
+
+			// Update useDeviceKeyboard prop based on state machine mode
+			const newUseDeviceKeyboard = state.mode === 'mobile-keyboard';
+			if (newUseDeviceKeyboard !== useDeviceKeyboard) {
+				useDeviceKeyboard = newUseDeviceKeyboard;
+				onRequestKeyboard(useDeviceKeyboard);
+			}
+		});
+
+		// Set up orientation change handler
+		window.addEventListener('orientationchange', handleOrientationChange);
+	});
+
+	onDestroy(() => {
+		if (unsubscribeInput) {
+			unsubscribeInput();
+		}
+		window.removeEventListener('orientationchange', handleOrientationChange);
+	});
+
+	function getDifficultyTheme(diff) {
+		const themes = {
+			ez: { primary: '#10b981', secondary: '#065f46', accent: '#34d399' },
+			mid: { primary: '#f59e0b', secondary: '#92400e', accent: '#fbbf24' },
+			high: { primary: '#ef4444', secondary: '#991b1b', accent: '#f87171' },
+			custom: { primary: '#8b5cf6', secondary: '#5b21b6', accent: '#a78bfa' }
+		};
+		return themes[diff] || themes.ez;
+	}
+
 	function handleInput(value) {
 		if (!$cache.gameState) return;
 
-		switch (value) {
-			case 'enter':
-				if (userInput.trim() !== '') {
-					// Process the input
-					onProcessInput(userInput.trim());
-					// Clear input
-					userInput = '';
-					cache.update((c) => ({ ...c, userInput: '' }));
-				}
-				break;
+		try {
+			switch (value) {
+				case 'enter':
+					inputStateMachine.processInput();
+					break;
 
-			case 'backspace':
-				userInput = userInput.slice(0, -1);
-				cache.update((c) => ({ ...c, userInput: userInput }));
-				break;
+				case 'backspace':
+					inputStateMachine.addChar('backspace', 'numpad');
+					break;
 
-			case 'keyboard':
-				toggleKeyboardMode();
-				break;
+				case 'keyboard':
+					toggleKeyboardMode();
+					break;
 
-			case '-':
-				// Only allow minus at start
-				if (userInput === '') {
-					userInput += value;
-					cache.update((c) => ({ ...c, userInput: userInput }));
-				}
-				break;
+				case '-':
+					inputStateMachine.addChar('-', 'numpad');
+					break;
 
-			default:
-				// Number input
-				if (value >= '0' && value <= '9') {
-					userInput += value;
-					cache.update((c) => ({ ...c, userInput: userInput }));
-				}
-				break;
-		}
+				default:
+					// Number input (0-9)
+					if (value >= '0' && value <= '9') {
+						inputStateMachine.addChar(value, 'numpad');
+					}
+					break;
+			}
 
-		// Haptic feedback on supported devices
-		if ('vibrate' in navigator && $cache.gameState) {
-			navigator.vibrate(10);
+			// Haptic feedback on supported devices
+			if ('vibrate' in navigator && $cache.gameState) {
+				navigator.vibrate(10);
+			}
+		} catch (error) {
+			console.error('Error handling numpad input:', error);
 		}
 	}
 
 	function toggleKeyboardMode() {
-		useDeviceKeyboard = !useDeviceKeyboard;
-		onRequestKeyboard(useDeviceKeyboard);
+		try {
+			const newMode = isKeyboardMode ? 'mobile-numpad' : 'mobile-keyboard';
+			inputStateMachine.setMode(newMode, 'user-toggle');
 
-		if (useDeviceKeyboard && inputElement) {
-			// Small delay to ensure DOM is updated
-			setTimeout(() => {
-				inputElement.focus();
-				inputElement.click();
-			}, 100);
+			if (newMode === 'mobile-keyboard' && inputElement) {
+				// Small delay to ensure DOM is updated
+				setTimeout(() => {
+					inputElement.focus();
+					inputElement.click();
+				}, 100);
+			}
+		} catch (error) {
+			console.error('Error toggling keyboard mode:', error);
 		}
 	}
 
 	// Handle device keyboard input
 	function handleDeviceInput(event) {
-		if (!useDeviceKeyboard || !$cache.gameState) return;
+		if (!isKeyboardMode || !$cache.gameState) return;
 
-		const value = event.target.value;
-		// Allow numbers and single minus at start
-		if (value.match(/^-?\d*$/)) {
-			userInput = value;
-			cache.update((c) => ({ ...c, userInput: userInput }));
+		try {
+			const value = event.target.value;
+			inputStateMachine.updateInput(value, 'device-keyboard');
+		} catch (error) {
+			console.error('Error handling device input:', error);
 		}
 	}
 
 	function handleDeviceKeydown(event) {
-		if (!useDeviceKeyboard || !$cache.gameState) return;
+		if (!isKeyboardMode || !$cache.gameState) return;
 
-		if (event.key === 'Enter') {
-			event.preventDefault();
-			handleInput('enter');
-			// Keep focus for continuous input
-			setTimeout(() => {
-				if (inputElement) {
-					inputElement.focus();
-				}
-			}, 100);
+		try {
+			if (event.key === 'Enter') {
+				event.preventDefault();
+				inputStateMachine.processInput();
+
+				// Keep focus for continuous input
+				setTimeout(() => {
+					if (inputElement) {
+						inputElement.focus();
+					}
+				}, 100);
+			}
+		} catch (error) {
+			console.error('Error handling device keydown:', error);
 		}
 	}
 
 	// Handle screen orientation changes
 	function handleOrientationChange() {
-		if (useDeviceKeyboard && inputElement) {
+		if (isKeyboardMode && inputElement) {
 			// Refocus input after orientation change
 			setTimeout(() => {
 				inputElement.focus();
@@ -146,55 +182,40 @@
 		}
 	}
 
-	// Sync userInput with store
-	$: userInput = $cache.userInput || '';
-
-	// Handle keyboard visibility changes
-	$: if ($viewport.isKeyboardOpen && !useDeviceKeyboard) {
+	// Handle keyboard visibility changes - sync with state machine
+	$: if ($viewport.isKeyboardOpen && !isKeyboardMode && $viewport.isMobile) {
 		// Device keyboard opened unexpectedly, switch modes
-		useDeviceKeyboard = true;
-		onRequestKeyboard(true);
+		inputStateMachine.setMode('mobile-keyboard', 'system-keyboard-open');
 	}
-
-	onMount(() => {
-		window.addEventListener('orientationchange', handleOrientationChange);
-
-		return () => {
-			window.removeEventListener('orientationchange', handleOrientationChange);
-		};
-	});
-
-	onDestroy(() => {
-		// Clean up
-		userInput = '';
-		cache.update((c) => ({ ...c, userInput: '' }));
-	});
 </script>
 
-{#if showNumpad || useDeviceKeyboard}
+{#if showNumpad}
 	<div
 		class="numpad-container"
-		class:device-mode={useDeviceKeyboard}
+		class:device-mode={isKeyboardMode}
 		style="--primary-color: {difficultyTheme.primary}; --secondary-color: {difficultyTheme.secondary}; --accent-color: {difficultyTheme.accent}"
 		in:slide={{ duration: 300, axis: 'y' }}
 		out:slide={{ duration: 200, axis: 'y' }}
 	>
-		{#if !useDeviceKeyboard}
+		{#if isNumpadMode}
 			<!-- Custom Numpad Mode -->
 			<div class="numpad" role="group" aria-label="Number input pad">
 				<!-- Input Display -->
 				<div
 					class="input-display"
 					aria-live="polite"
-					aria-label="Current input: {userInput || 'none'}"
+					aria-label="Current input: {inputState.input || 'none'}"
 				>
-					<div class="input-value">{userInput || '0'}</div>
+					<div class="input-value" class:processing={inputState.isProcessing}>
+						{inputState.input || '0'}
+					</div>
 					<div class="input-actions">
 						<button
 							class="keyboard-toggle"
 							on:click={() => handleInput('keyboard')}
 							aria-label="Switch to device keyboard"
 							title="Use device keyboard"
+							disabled={inputState.isProcessing}
 						>
 							<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
 								<path
@@ -216,7 +237,7 @@
 									on:click={() => handleInput(button.value)}
 									aria-label={button.title || `${button.type} ${button.value}`}
 									title={button.title}
-									disabled={!$cache.gameState}
+									disabled={!$cache.gameState || inputState.isProcessing}
 								>
 									{button.label}
 								</button>
@@ -230,14 +251,19 @@
 							class="numpad-button enter-button"
 							on:click={() => handleInput('enter')}
 							aria-label="Submit answer"
-							disabled={!$cache.gameState || !userInput.trim()}
+							disabled={!$cache.gameState || !inputState.canProcess || inputState.isProcessing}
+							class:can-process={inputState.canProcess}
 						>
-							Enter Answer
+							{#if inputState.isProcessing}
+								Processing...
+							{:else}
+								Enter Answer
+							{/if}
 						</button>
 					</div>
 				</div>
 			</div>
-		{:else}
+		{:else if isKeyboardMode}
 			<!-- Device Keyboard Mode -->
 			<div class="device-keyboard-mode" in:fade={{ duration: 200 }}>
 				<div class="keyboard-info">
@@ -247,6 +273,7 @@
 						on:click={() => handleInput('keyboard')}
 						aria-label="Switch to custom numpad"
 						title="Use custom numpad"
+						disabled={inputState.isProcessing}
 					>
 						<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
 							<path
@@ -261,15 +288,32 @@
 					type="number"
 					inputmode="numeric"
 					pattern="-?\d*"
-					value={userInput}
+					value={inputState.input}
 					on:input={handleDeviceInput}
 					on:keydown={handleDeviceKeydown}
 					placeholder="Enter answer..."
 					aria-label="Math answer input"
 					class="device-input"
+					class:processing={inputState.isProcessing}
 					autocomplete="off"
-					disabled={!$cache.gameState}
+					disabled={!$cache.gameState || inputState.isProcessing}
 				/>
+
+				<!-- Processing indicator -->
+				{#if inputState.isProcessing}
+					<div class="processing-indicator">Processing answer...</div>
+				{/if}
+			</div>
+		{/if}
+
+		<!-- State indicator for debugging -->
+		{#if false}
+			<div class="state-indicator">
+				<div>Mode: {inputState.mode}</div>
+				<div>Input: "{inputState.input}"</div>
+				<div>Source: {inputState.inputSource || 'none'}</div>
+				<div>Processing: {inputState.isProcessing ? 'Yes' : 'No'}</div>
+				<div>Can Process: {inputState.canProcess ? 'Yes' : 'No'}</div>
 			</div>
 		{/if}
 	</div>
@@ -308,6 +352,12 @@
 		border-radius: 12px;
 		padding: clamp(0.75rem, 3vw, 1rem);
 		margin-bottom: clamp(0.5rem, 2vw, 1rem);
+		transition: all 0.3s ease;
+	}
+
+	.input-display:has(.processing) {
+		border-color: var(--secondary-color);
+		background: rgba(255, 255, 255, 0.02);
 	}
 
 	.input-value {
@@ -318,6 +368,12 @@
 		min-height: 1.5rem;
 		flex: 1;
 		text-align: left;
+		transition: all 0.3s ease;
+	}
+
+	.input-value.processing {
+		opacity: 0.7;
+		color: var(--secondary-color);
 	}
 
 	.input-actions {
@@ -428,6 +484,13 @@
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 1px;
+		transition: all 0.3s ease;
+	}
+
+	.enter-button.can-process {
+		background: var(--accent-color);
+		border-color: var(--accent-color);
+		box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
 	}
 
 	.enter-button:active:not(:disabled) {
@@ -483,6 +546,7 @@
 		color: #fff;
 		font-family: 'Courier New', monospace;
 		font-weight: 600;
+		transition: all 0.3s ease;
 	}
 
 	.device-input:focus {
@@ -491,15 +555,50 @@
 		box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
 	}
 
+	.device-input.processing {
+		opacity: 0.7;
+		background: rgba(255, 255, 255, 0.02);
+		border-color: var(--secondary-color);
+	}
+
 	.device-input:disabled {
 		opacity: 0.5;
 		background: rgba(255, 255, 255, 0.02);
 		border-color: rgba(255, 255, 255, 0.2);
+		cursor: not-allowed;
 	}
 
 	.device-input::placeholder {
 		color: #666;
 		font-weight: normal;
+	}
+
+	.processing-indicator {
+		margin-top: 0.5rem;
+		color: var(--secondary-color);
+		font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+		font-style: italic;
+	}
+
+	/* State indicator for debugging */
+	.state-indicator {
+		position: absolute;
+		top: 5px;
+		right: 5px;
+		background: rgba(0, 0, 0, 0.9);
+		color: #0f0;
+		padding: 0.25rem;
+		border-radius: 3px;
+		font-family: monospace;
+		font-size: 0.7rem;
+		z-index: 100;
+		pointer-events: none;
+		border: 1px solid #333;
+	}
+
+	.state-indicator div {
+		margin-bottom: 0.1rem;
+		white-space: nowrap;
 	}
 
 	/* Remove spinner arrows */
@@ -560,7 +659,8 @@
 	@media (prefers-reduced-motion: reduce) {
 		.numpad-button,
 		.keyboard-toggle,
-		.device-input {
+		.device-input,
+		.input-value {
 			transition: none;
 		}
 

@@ -1,8 +1,9 @@
-<!-- src/lib/tabs/play/input/InputManager.svelte -->
+<!-- src/lib/tabs/play/input/InputManager.svelte - UPDATED -->
 <script>
 	import { onMount, onDestroy } from 'svelte';
-	import { cache, functionTriggerEnter } from '$lib/stores.js';
+	import { cache } from '$lib/stores.js';
 	import { viewport } from '../layout/viewportStore';
+	import { inputStateMachine } from './InputStateMachine.js';
 
 	// Props for game control callbacks
 	export let isGamePaused;
@@ -12,180 +13,240 @@
 	export let onQuitGame;
 	export let onProcessInput;
 
-	// Input state management
-	let userInput = '';
-	let inputMode = 'desktop'; // 'desktop' | 'mobile-numpad' | 'mobile-keyboard'
-	let isInputFocused = false;
-	let preventNextInput = false;
+	// Internal state
+	let inputState = inputStateMachine.getState();
+	let unsubscribeInput = null;
+	let eventCleanup = [];
 
-	// Event cleanup functions
-	let cleanupFunctions = [];
+	// Initialize input state machine when component mounts
+	onMount(() => {
+		// Initialize with game callbacks
+		inputStateMachine.init({
+			onProcessInput,
+			onStartGame,
+			onPauseGame,
+			onResumeGame,
+			onQuitGame
+		});
 
-	// Determine input mode based on viewport
-	$: if ($viewport.isMobile) {
-		inputMode = 'mobile-numpad'; // Default to numpad, can switch to keyboard
-	} else {
-		inputMode = 'desktop';
-	}
+		// Subscribe to state changes
+		unsubscribeInput = inputStateMachine.subscribe((state) => {
+			inputState = state;
+			// Sync with cache for other components that might read it
+			cache.update((c) => ({ ...c, userInput: state.input }));
+		});
 
-	// Handle desktop keyboard input
-	function handleKeydown(event) {
-		try {
-			// Skip if using mobile numpad (handled separately)
-			if (inputMode === 'mobile-numpad') return;
+		// Set initial mode based on viewport
+		updateInputMode();
 
-			// Prevent handling if we're in a mobile keyboard overlay
-			if (preventNextInput) {
-				preventNextInput = false;
-				return;
-			}
+		// Set up event listeners
+		setupEventListeners();
+	});
 
-			// Game controls (available anytime)
-			if (event.key === 'Escape') {
-				event.preventDefault();
-				handleEscapeKey();
-				return;
-			}
-
-			// Start/Resume game controls
-			if (event.key === 'Enter' && isGamePaused) {
-				event.preventDefault();
-				handleEnterKey();
-				return;
-			}
-
-			// Pause/Resume toggle - only during active gameplay
-			if (event.key === ' ' && $cache.diff !== 'Null') {
-				event.preventDefault();
-				handleSpaceKey();
-				return;
-			}
-
-			// Difficulty selection shortcuts (1-4) - only when paused and no difficulty selected
-			if (isGamePaused && event.key >= '1' && event.key <= '4' && $cache.diff === 'Null') {
-				// Let the start screen handle this
-				return;
-			}
-
-			// Game input (only when game is active and not paused)
-			if (!isGamePaused && $cache.gameState) {
-				handleGameInput(event);
-			}
-		} catch (error) {
-			console.error('Error handling keydown:', error);
+	onDestroy(() => {
+		// Clean up subscriptions
+		if (unsubscribeInput) {
+			unsubscribeInput();
 		}
+
+		// Clean up event listeners
+		eventCleanup.forEach((cleanup) => cleanup());
+		eventCleanup = [];
+	});
+
+	// Update input mode when viewport changes
+	$: if ($viewport) {
+		updateInputMode();
 	}
 
-	function handleEscapeKey() {
-		if (!isGamePaused && onQuitGame) {
-			onQuitGame();
-		}
+	// Update game callbacks when props change
+	$: if (onProcessInput || onStartGame || onPauseGame || onResumeGame || onQuitGame) {
+		inputStateMachine.init({
+			onProcessInput,
+			onStartGame,
+			onPauseGame,
+			onResumeGame,
+			onQuitGame
+		});
 	}
 
-	function handleEnterKey() {
-		if ($cache.diff !== 'Null') {
-			const hasExistingElements = document.querySelector('.equation-element');
-			if (hasExistingElements && onResumeGame) {
-				onResumeGame();
-			} else if (onStartGame) {
-				onStartGame();
-			}
-		}
+	function updateInputMode() {
+		const newMode = $viewport.isMobile ? 'mobile-numpad' : 'desktop';
+		inputStateMachine.setMode(newMode, 'viewport-change');
 	}
 
-	function handleSpaceKey() {
-		if (!isGamePaused && onPauseGame) {
-			onPauseGame();
-		} else if (isGamePaused && document.querySelector('.equation-element') && onResumeGame) {
-			onResumeGame();
-		}
-	}
+	function setupEventListeners() {
+		// Keyboard event handler
+		const handleKeydown = (event) => {
+			try {
+				// Skip if not in desktop mode
+				if (inputState.mode !== 'desktop') return;
 
-	function handleGameInput(event) {
-		try {
-			// Number input (including negative sign at start)
-			if ((event.key >= '0' && event.key <= '9') || (event.key === '-' && userInput === '')) {
-				event.preventDefault();
-				userInput += event.key;
-				updateCacheInput(userInput);
-			}
-			// Backspace
-			else if (event.key === 'Backspace') {
-				event.preventDefault();
-				userInput = userInput.slice(0, -1);
-				updateCacheInput(userInput);
-			}
-			// Enter - submit answer
-			else if (event.key === 'Enter') {
-				event.preventDefault();
-				if (userInput.trim() !== '') {
-					submitAnswer(userInput);
+				// Get current game context
+				const gameContext = {
+					gameState: $cache.gameState,
+					isGamePaused,
+					difficulty: $cache.diff
+				};
+
+				// Handle game controls (available anytime)
+				if (event.key === 'Escape') {
+					event.preventDefault();
+					inputStateMachine.handleGameAction('quit', gameContext);
+					return;
 				}
+
+				// Handle start/resume controls
+				if (event.key === 'Enter' && isGamePaused) {
+					event.preventDefault();
+
+					if ($cache.diff !== 'Null') {
+						// Check if we have existing elements (resume) or need to start
+						const hasExistingElements = document.querySelector('.equation-element');
+						const action = hasExistingElements ? 'resume' : 'start';
+						inputStateMachine.handleGameAction(action, gameContext);
+					} else {
+						inputStateMachine.handleGameAction('start', gameContext);
+					}
+					return;
+				}
+
+				// Handle pause/resume toggle during gameplay
+				if (event.key === ' ' && $cache.diff !== 'Null') {
+					event.preventDefault();
+					inputStateMachine.handleGameAction('toggle-pause', gameContext);
+					return;
+				}
+
+				// Handle difficulty selection shortcuts (1-4) during start screen
+				if (isGamePaused && event.key >= '1' && event.key <= '4' && $cache.diff === 'Null') {
+					// Let the start screen handle difficulty selection
+					return;
+				}
+
+				// Handle game input (only when game is active and not paused)
+				if (!isGamePaused && $cache.gameState) {
+					handleGameInput(event);
+				}
+			} catch (error) {
+				console.error('Error handling keydown:', error);
 			}
-		} catch (error) {
-			console.error('Error handling game input:', error);
-		}
-	}
+		};
 
-	function updateCacheInput(value) {
-		try {
-			cache.update((n) => ({ ...n, userInput: value }));
-		} catch (error) {
-			console.error('Error updating cache input:', error);
-		}
-	}
-
-	function submitAnswer(answer) {
-		try {
-			if (onProcessInput) {
-				onProcessInput(answer);
+		// Game input handler for desktop
+		const handleGameInput = (event) => {
+			try {
+				// Number input (0-9)
+				if (event.key >= '0' && event.key <= '9') {
+					event.preventDefault();
+					inputStateMachine.addChar(event.key, 'keyboard');
+				}
+				// Negative sign (only at start)
+				else if (event.key === '-') {
+					event.preventDefault();
+					inputStateMachine.addChar('-', 'keyboard');
+				}
+				// Backspace
+				else if (event.key === 'Backspace') {
+					event.preventDefault();
+					inputStateMachine.addChar('backspace', 'keyboard');
+				}
+				// Enter - submit answer
+				else if (event.key === 'Enter') {
+					event.preventDefault();
+					inputStateMachine.processInput();
+				}
+			} catch (error) {
+				console.error('Error handling game input:', error);
 			}
-			userInput = '';
-			updateCacheInput('');
-		} catch (error) {
-			console.error('Error submitting answer:', error);
-		}
-	}
+		};
 
-	// Handle mobile numpad triggers
-	$: if ($functionTriggerEnter) {
-		try {
-			if ($cache.userInput.trim() !== '') {
-				submitAnswer($cache.userInput);
+		// Visibility change handler (pause on tab switch)
+		const handleVisibilityChange = () => {
+			try {
+				if (document.hidden && !isGamePaused && $cache.gameState) {
+					inputStateMachine.handleGameAction('pause', {
+						gameState: $cache.gameState,
+						isGamePaused,
+						difficulty: $cache.diff
+					});
+				}
+			} catch (error) {
+				console.error('Error handling visibility change:', error);
 			}
-		} catch (error) {
-			console.error('Error handling mobile input trigger:', error);
-		} finally {
-			functionTriggerEnter.update((n) => false);
-		}
+		};
+
+		// Window blur handler (pause on focus loss)
+		const handleWindowBlur = () => {
+			try {
+				if (!isGamePaused && $cache.gameState) {
+					inputStateMachine.handleGameAction('pause', {
+						gameState: $cache.gameState,
+						isGamePaused,
+						difficulty: $cache.diff
+					});
+				}
+			} catch (error) {
+				console.error('Error handling window blur:', error);
+			}
+		};
+
+		// Context menu prevention on mobile during game
+		const handleContextMenu = (event) => {
+			try {
+				if ($viewport.isMobile && $cache.gameState) {
+					event.preventDefault();
+				}
+			} catch (error) {
+				console.error('Error handling context menu:', error);
+			}
+		};
+
+		// Orientation change handler
+		const handleOrientationChange = () => {
+			try {
+				// Update input mode after orientation change
+				setTimeout(() => {
+					updateInputMode();
+				}, 500);
+			} catch (error) {
+				console.error('Error handling orientation change:', error);
+			}
+		};
+
+		// Add event listeners
+		window.addEventListener('keydown', handleKeydown);
+		eventCleanup.push(() => window.removeEventListener('keydown', handleKeydown));
+
+		document.addEventListener('visibilitychange', handleVisibilityChange);
+		eventCleanup.push(() =>
+			document.removeEventListener('visibilitychange', handleVisibilityChange)
+		);
+
+		window.addEventListener('blur', handleWindowBlur);
+		eventCleanup.push(() => window.removeEventListener('blur', handleWindowBlur));
+
+		document.addEventListener('contextmenu', handleContextMenu);
+		eventCleanup.push(() => document.removeEventListener('contextmenu', handleContextMenu));
+
+		window.addEventListener('orientationchange', handleOrientationChange);
+		eventCleanup.push(() =>
+			window.removeEventListener('orientationchange', handleOrientationChange)
+		);
 	}
 
-	// Sync userInput with cache for mobile
-	$: if (inputMode === 'mobile-numpad' || inputMode === 'mobile-keyboard') {
-		userInput = $cache.userInput || '';
-	}
-
-	// Handle input mode switching for mobile
+	// Public API for mode switching (called by other components)
 	export function switchInputMode(newMode) {
 		try {
 			if ($viewport.isMobile && ['mobile-numpad', 'mobile-keyboard'].includes(newMode)) {
-				inputMode = newMode;
-
-				// Clear any existing input when switching modes
-				userInput = '';
-				updateCacheInput('');
-
-				// Prevent the next desktop input to avoid conflicts
-				if (newMode === 'mobile-keyboard') {
-					preventNextInput = true;
-				}
+				inputStateMachine.setMode(newMode, 'component-request');
 			}
 		} catch (error) {
 			console.error('Error switching input mode:', error);
 		}
 	}
 
-	// Keyboard shortcuts help
+	// Get keyboard shortcuts for help display
 	export function getKeyboardShortcuts() {
 		const shortcuts = [
 			{ key: 'Enter', action: 'Start/Resume game', context: 'Menu/Paused' },
@@ -209,175 +270,43 @@
 		});
 	}
 
-	// Focus management for accessibility
-	function manageFocus() {
-		try {
-			// Ensure proper focus management for screen readers
-			if ($cache.gameState && !isGamePaused && inputMode === 'desktop') {
-				const gameField = document.querySelector('.game-field');
-				if (gameField) {
-					gameField.setAttribute('tabindex', '0');
-					gameField.focus();
-				}
-			}
-		} catch (error) {
-			console.error('Error managing focus:', error);
-		}
-	}
-
-	// Handle visibility changes (pause on tab switch)
-	function handleVisibilityChange() {
-		try {
-			if (document.hidden && !isGamePaused && $cache.gameState && onPauseGame) {
-				onPauseGame();
-			}
-		} catch (error) {
-			console.error('Error handling visibility change:', error);
-		}
-	}
-
-	// Handle window blur (pause on focus loss)
-	function handleWindowBlur() {
-		try {
-			if (!isGamePaused && $cache.gameState && onPauseGame) {
-				onPauseGame();
-			}
-		} catch (error) {
-			console.error('Error handling window blur:', error);
-		}
-	}
-
-	// Prevent context menu on mobile during game
-	function handleContextMenu(event) {
-		try {
-			if ($viewport.isMobile && $cache.gameState) {
-				event.preventDefault();
-			}
-		} catch (error) {
-			console.error('Error handling context menu:', error);
-		}
-	}
-
-	// Handle mobile device orientation changes
-	function handleOrientationChange() {
-		try {
-			// Clear any pending input on orientation change
-			if ($viewport.isMobile) {
-				userInput = '';
-				updateCacheInput('');
-			}
-		} catch (error) {
-			console.error('Error handling orientation change:', error);
-		}
-	}
-
-	// Handle input focus events
-	function handleInputFocus() {
-		isInputFocused = true;
-	}
-
-	function handleInputBlur() {
-		isInputFocused = false;
-	}
-
-	// Setup and cleanup event listeners
-	function setupEventListeners() {
-		try {
-			// Set up event listeners
-			const keydownHandler = (event) => handleKeydown(event);
-			window.addEventListener('keydown', keydownHandler);
-			cleanupFunctions.push(() => window.removeEventListener('keydown', keydownHandler));
-
-			const visibilityHandler = () => handleVisibilityChange();
-			document.addEventListener('visibilitychange', visibilityHandler);
-			cleanupFunctions.push(() =>
-				document.removeEventListener('visibilitychange', visibilityHandler)
-			);
-
-			const blurHandler = () => handleWindowBlur();
-			window.addEventListener('blur', blurHandler);
-			cleanupFunctions.push(() => window.removeEventListener('blur', blurHandler));
-
-			const contextMenuHandler = (event) => handleContextMenu(event);
-			document.addEventListener('contextmenu', contextMenuHandler);
-			cleanupFunctions.push(() => document.removeEventListener('contextmenu', contextMenuHandler));
-
-			const orientationHandler = () => handleOrientationChange();
-			window.addEventListener('orientationchange', orientationHandler);
-			cleanupFunctions.push(() =>
-				window.removeEventListener('orientationchange', orientationHandler)
-			);
-		} catch (error) {
-			console.error('Error setting up event listeners:', error);
-		}
-	}
-
-	function cleanupEventListeners() {
-		try {
-			cleanupFunctions.forEach((cleanup) => {
-				try {
-					cleanup();
-				} catch (cleanupError) {
-					console.warn('Error during event listener cleanup:', cleanupError);
-				}
-			});
-			cleanupFunctions = [];
-		} catch (error) {
-			console.error('Error cleaning up event listeners:', error);
-		}
-	}
-
-	onMount(() => {
-		setupEventListeners();
-		manageFocus();
-	});
-
-	onDestroy(() => {
-		cleanupEventListeners();
-		// Clean up any remaining state
-		userInput = '';
-		updateCacheInput('');
-	});
-
-	// Reactive focus management
-	$: if ($cache.gameState !== undefined || isGamePaused !== undefined) {
-		manageFocus();
-	}
-
-	// Handle input mode changes
-	$: if (inputMode && $viewport.isMobile) {
-		// Reset input when switching modes
-		userInput = '';
-		updateCacheInput('');
-	}
-
-	// Export current input state for debugging
+	// Get current input state for debugging
 	export function getInputState() {
 		return {
-			inputMode,
-			userInput,
-			isInputFocused,
+			...inputState,
 			isGamePaused,
 			gameState: $cache.gameState,
+			difficulty: $cache.diff,
 			isMobile: $viewport.isMobile
+		};
+	}
+
+	// Get debug information
+	export function getDebugInfo() {
+		return {
+			inputStateMachine: inputStateMachine.getDebugInfo(),
+			componentState: getInputState(),
+			viewport: {
+				isMobile: $viewport.isMobile,
+				width: $viewport.width,
+				height: $viewport.height
+			}
 		};
 	}
 </script>
 
-<!-- This component handles input only, no visual output -->
-<!-- We use svelte:window for global event handling -->
-<svelte:window on:keydown={handleKeydown} />
-
 <!-- Debug info for development (hidden in production) -->
 {#if false}
 	<div class="input-debug">
-		<div>Input Mode: {inputMode}</div>
+		<div>Mode: {inputState.mode}</div>
+		<div>Input: "{inputState.input}"</div>
+		<div>Source: {inputState.inputSource || 'none'}</div>
+		<div>Processing: {inputState.isProcessing ? 'Yes' : 'No'}</div>
 		<div>Game State: {$cache.gameState ? 'Active' : 'Inactive'}</div>
 		<div>Paused: {isGamePaused ? 'Yes' : 'No'}</div>
-		<div>User Input: "{userInput}"</div>
-		<div>Cache Input: "{$cache.userInput}"</div>
+		<div>Difficulty: {$cache.diff}</div>
 		<div>Viewport: {$viewport.isMobile ? 'Mobile' : 'Desktop'}</div>
-		<div>Focused: {isInputFocused ? 'Yes' : 'No'}</div>
+		<div>Subscribers: {inputState.subscriberCount || 0}</div>
 	</div>
 {/if}
 

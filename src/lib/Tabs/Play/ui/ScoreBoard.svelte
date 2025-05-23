@@ -1,9 +1,11 @@
-<!-- src/lib/tabs/play/ui/ScoreBoard.svelte -->
+<!-- src/lib/tabs/play/ui/ScoreBoard.svelte - UPDATED -->
 <script>
+	import { onMount, onDestroy } from 'svelte';
 	import { cache } from '$lib/stores.js';
 	import { viewport } from '../layout/viewportStore';
 	import { fade, scale } from 'svelte/transition';
 	import { gameState, score, health, maxHealth, isGameActive } from '$lib/stores/gameStore.js';
+	import { inputStateMachine } from '../input/InputStateMachine.js';
 
 	// Props for game control
 	export let isGamePaused = true;
@@ -19,15 +21,33 @@
 	$: currentMaxHealth = $maxHealth;
 	$: gameActive = $isGameActive;
 
-	// Input handling
-	let inputElement;
-	let userInput = '';
+	// Input state from state machine
+	let inputState = inputStateMachine.getState();
+	let unsubscribeInput = null;
 
-	// Sync with cache userInput
-	$: userInput = $cache.userInput || '';
+	// Input element reference for desktop focus management
+	let inputElement;
 
 	// Difficulty-based styling
 	$: difficultyTheme = getDifficultyTheme($cache.diff);
+
+	// Determine what to show in the display
+	$: showInputField =
+		gameActive && !isGamePaused && !$viewport.isMobile && inputState.mode === 'desktop';
+	$: displayText = getDisplayText($cache.diff, gameActive, inputState.input, currentScore);
+
+	onMount(() => {
+		// Subscribe to input state machine
+		unsubscribeInput = inputStateMachine.subscribe((state) => {
+			inputState = state;
+		});
+	});
+
+	onDestroy(() => {
+		if (unsubscribeInput) {
+			unsubscribeInput();
+		}
+	});
 
 	function getDifficultyTheme(diff) {
 		const themes = {
@@ -48,34 +68,32 @@
 		}
 	}
 
-	// Handle input changes
+	// Handle input changes - route through input state machine
 	function handleInputChange(event) {
 		const value = event.target.value;
-		// Only allow numbers and negative sign at the start
-		if (value.match(/^-?\d*$/)) {
-			userInput = value;
-			cache.update((c) => ({ ...c, userInput: value }));
-		}
+		inputStateMachine.updateInput(value, 'mobile-input');
 	}
 
-	// Handle input submission
+	// Handle input submission - route through input state machine
 	function handleInputSubmit(event) {
-		if (event.key === 'Enter' && userInput.trim() !== '') {
-			onProcessInput(userInput);
-			userInput = '';
-			cache.update((c) => ({ ...c, userInput: '' }));
+		if (event.key === 'Enter') {
+			event.preventDefault();
+			inputStateMachine.processInput();
 		}
 	}
 
-	// Focus input when game becomes active
-	$: if (gameActive && !isGamePaused && inputElement && !$viewport.isMobile) {
+	// Focus input when game becomes active (desktop only)
+	$: if (
+		gameActive &&
+		!isGamePaused &&
+		inputElement &&
+		!$viewport.isMobile &&
+		inputState.mode === 'desktop'
+	) {
 		setTimeout(() => {
 			inputElement.focus();
 		}, 100);
 	}
-
-	// Format display text
-	$: displayText = getDisplayText($cache.diff, gameActive, userInput, currentScore);
 
 	function getDisplayText(diff, gameActive, userInput, score) {
 		if (!gameActive) {
@@ -87,8 +105,6 @@
 		}
 		return ''; // Input field will be shown instead
 	}
-
-	$: showInputField = gameActive && !isGamePaused && !$viewport.isMobile;
 </script>
 
 <div
@@ -116,19 +132,21 @@
 		<!-- Central Display -->
 		<div class="central-display">
 			{#if showInputField}
-				<!-- Desktop Input Field -->
+				<!-- Desktop Input Field - controlled by InputStateMachine -->
 				<input
 					bind:this={inputElement}
 					type="text"
 					inputmode="numeric"
 					pattern="-?\d*"
-					bind:value={userInput}
+					value={inputState.input}
 					on:input={handleInputChange}
 					on:keydown={handleInputSubmit}
 					class="game-input"
+					class:processing={inputState.isProcessing}
 					placeholder="Enter answer..."
 					autocomplete="off"
 					aria-label="Math answer input"
+					disabled={inputState.isProcessing}
 				/>
 			{:else}
 				<!-- Score/Status Display -->
@@ -168,6 +186,16 @@
 			{/if}
 		</div>
 	</div>
+
+	<!-- Input State Indicator (development only) -->
+	{#if false}
+		<div class="input-state-indicator">
+			<div>Mode: {inputState.mode}</div>
+			<div>Input: "{inputState.input}"</div>
+			<div>Source: {inputState.inputSource || 'none'}</div>
+			<div>Can Process: {inputState.canProcess ? 'Yes' : 'No'}</div>
+		</div>
+	{/if}
 </div>
 
 <style>
@@ -178,9 +206,11 @@
 		border-top: 2px solid var(--primary-color);
 		display: flex;
 		align-items: center;
-		padding: 0 1rem;
+		padding: 1rem;
+		padding-top: 1rem;
 		backdrop-filter: blur(10px);
 		overflow: hidden;
+		position: relative;
 	}
 
 	.scoreboard-content {
@@ -269,9 +299,21 @@
 		box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
 	}
 
+	.game-input.processing {
+		background: rgba(255, 255, 255, 0.05);
+		border-color: var(--secondary-color);
+		opacity: 0.7;
+		cursor: not-allowed;
+	}
+
 	.game-input::placeholder {
 		color: #666;
 		font-weight: normal;
+	}
+
+	.game-input:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
 	}
 
 	/* Remove number input spinners */
@@ -330,6 +372,27 @@
 
 	.quit-btn:hover {
 		background: rgba(239, 68, 68, 0.4);
+	}
+
+	/* Input State Indicator (development only) */
+	.input-state-indicator {
+		position: absolute;
+		top: 5px;
+		right: 5px;
+		background: rgba(0, 0, 0, 0.9);
+		color: #0f0;
+		padding: 0.25rem;
+		border-radius: 3px;
+		font-family: monospace;
+		font-size: 0.7rem;
+		z-index: 100;
+		pointer-events: none;
+		border: 1px solid #333;
+	}
+
+	.input-state-indicator div {
+		margin-bottom: 0.1rem;
+		white-space: nowrap;
 	}
 
 	/* Mobile Adjustments */

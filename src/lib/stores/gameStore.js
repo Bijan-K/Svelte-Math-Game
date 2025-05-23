@@ -1,11 +1,11 @@
-// src/lib/stores/gameStore.js
+// src/lib/stores/gameStore.js - FIXED VERSION
 import { writable, derived, get } from 'svelte/store';
 import { cache, record, missed_eq_list } from '../stores.js';
 import { getTodaysDateFormatted } from '../functions.js';
 import { getDifficultyConfig, validateCustomConfig, calculateElementLifetime } from '../tabs/play/core/DifficultyConfig.js';
 import { generateEquation, validateAnswer } from '../tabs/play/core/EquationGenerator.js';
 
-// Game state store
+// Centralized game state - SINGLE SOURCE OF TRUTH
 export const gameState = writable({
 	isActive: false,
 	isPaused: true,
@@ -17,12 +17,155 @@ export const gameState = writable({
 	maxHealth: 0,
 	idCounter: 0,
 	fieldDimensions: { width: 800, height: 600 },
-	safeSpawnArea: null
+	safeSpawnArea: null,
+	// Add timing state to prevent race conditions
+	lastSpawnTime: 0,
+	gameStartTime: 0,
+	pauseStartTime: 0,
+	totalPausedTime: 0
 });
 
-// Track active timeouts for cleanup
-let elementTimeouts = new Map();
-let spawnTimeout = null;
+// Unified timer management to prevent race conditions
+class GameTimerManager {
+	constructor() {
+		this.elementTimers = new Map(); // elementId -> { timeoutId, originalLifetime, pausedAt }
+		this.spawnTimer = null;
+		this.gameState = null;
+		this.unsubscribe = null;
+	}
+
+	init(gameStateStore) {
+		this.gameState = gameStateStore;
+		// Subscribe to state changes to handle timer adjustments
+		this.unsubscribe = gameStateStore.subscribe(state => {
+			this.handleStateChange(state);
+		});
+	}
+
+	handleStateChange(state) {
+		if (state.isPaused && !this.isPaused) {
+			this.pauseAllTimers(state);
+		} else if (!state.isPaused && this.isPaused) {
+			this.resumeAllTimers(state);
+		}
+		this.isPaused = state.isPaused;
+	}
+
+	scheduleElementExpiration(element, onExpire) {
+		if (this.elementTimers.has(element.id)) {
+			this.clearElementTimer(element.id);
+		}
+
+		const timeoutId = setTimeout(() => {
+			// Double-check state at execution time to prevent race conditions
+			const currentState = get(this.gameState);
+			if (!currentState.isActive || currentState.isPaused) {
+				return; // Game state changed, don't expire
+			}
+
+			this.elementTimers.delete(element.id);
+			onExpire(element);
+		}, element.lifetime);
+
+		this.elementTimers.set(element.id, {
+			timeoutId,
+			originalLifetime: element.lifetime,
+			startTime: Date.now(),
+			pausedAt: null
+		});
+	}
+
+	scheduleSpawn(interval, onSpawn) {
+		this.clearSpawnTimer();
+		
+		this.spawnTimer = setTimeout(() => {
+			const currentState = get(this.gameState);
+			if (currentState.isActive && !currentState.isPaused) {
+				onSpawn();
+				// Schedule next spawn recursively
+				this.scheduleSpawn(interval, onSpawn);
+			}
+		}, interval);
+	}
+
+	pauseAllTimers(state) {
+		const pauseTime = Date.now();
+		
+		// Pause element timers
+		for (const [elementId, timer] of this.elementTimers.entries()) {
+			clearTimeout(timer.timeoutId);
+			timer.pausedAt = pauseTime;
+		}
+
+		// Clear spawn timer
+		this.clearSpawnTimer();
+	}
+
+	resumeAllTimers(state) {
+		const resumeTime = Date.now();
+		
+		// Resume element timers with adjusted lifetimes
+		for (const [elementId, timer] of this.elementTimers.entries()) {
+			if (timer.pausedAt) {
+				const pauseDuration = resumeTime - timer.pausedAt;
+				const elapsed = timer.pausedAt - timer.startTime;
+				const remainingTime = timer.originalLifetime - elapsed;
+
+				if (remainingTime > 0) {
+					// Find the element and reschedule
+					const element = state.elements.find(el => el.id === elementId);
+					if (element) {
+						this.scheduleElementExpiration(
+							{ ...element, lifetime: remainingTime },
+							this.onElementExpire
+						);
+					}
+				}
+			}
+		}
+
+		// Resume spawn timer
+		if (state.config) {
+			this.scheduleSpawn(state.config.spawnInterval, this.onSpawnElement);
+		}
+	}
+
+	clearElementTimer(elementId) {
+		const timer = this.elementTimers.get(elementId);
+		if (timer) {
+			clearTimeout(timer.timeoutId);
+			this.elementTimers.delete(elementId);
+		}
+	}
+
+	clearSpawnTimer() {
+		if (this.spawnTimer) {
+			clearTimeout(this.spawnTimer);
+			this.spawnTimer = null;
+		}
+	}
+
+	clearAllTimers() {
+		// Clear all element timers
+		for (const timer of this.elementTimers.values()) {
+			clearTimeout(timer.timeoutId);
+		}
+		this.elementTimers.clear();
+
+		// Clear spawn timer
+		this.clearSpawnTimer();
+	}
+
+	destroy() {
+		this.clearAllTimers();
+		if (this.unsubscribe) {
+			this.unsubscribe();
+		}
+	}
+}
+
+// Create timer manager instance
+const timerManager = new GameTimerManager();
 
 // Initialize game configuration
 export function initializeGame(difficulty, customConfig = null) {
@@ -31,6 +174,7 @@ export function initializeGame(difficulty, customConfig = null) {
 		: getDifficultyConfig(difficulty);
 	
 	const maxHealth = config.healthBars || 3;
+	const now = Date.now();
 	
 	gameState.update(state => ({
 		...state,
@@ -42,10 +186,14 @@ export function initializeGame(difficulty, customConfig = null) {
 		idCounter: 0,
 		isActive: false,
 		isPaused: true,
-		isGameOver: false
+		isGameOver: false,
+		gameStartTime: now,
+		lastSpawnTime: now,
+		pauseStartTime: 0,
+		totalPausedTime: 0
 	}));
 
-	// Update cache to reflect initialization
+	// Sync cache atomically
 	cache.update(c => ({
 		...c,
 		diff: difficulty,
@@ -56,6 +204,9 @@ export function initializeGame(difficulty, customConfig = null) {
 		customConfig: difficulty === 'custom' ? config : null
 	}));
 
+	// Initialize timer manager
+	timerManager.init(gameState);
+
 	return config;
 }
 
@@ -64,74 +215,70 @@ export function startGame() {
 	const state = get(gameState);
 	if (!state.config) return false;
 
+	const now = Date.now();
+
 	gameState.update(s => ({
 		...s,
 		isActive: true,
-		isPaused: false
+		isPaused: false,
+		gameStartTime: now,
+		lastSpawnTime: now,
+		totalPausedTime: 0
 	}));
 
-	// Update cache
-	cache.update(c => ({
-		...c,
-		gameState: true
-	}));
+	// Sync cache
+	cache.update(c => ({ ...c, gameState: true }));
 
 	// Spawn initial elements
 	spawnInitialElements();
 	
-	// Schedule next spawn
-	scheduleNextSpawn();
+	// Schedule spawning
+	timerManager.scheduleSpawn(state.config.spawnInterval, () => {
+		spawnElement();
+	});
 	
 	return true;
 }
 
-// Pause the game
+// Pause the game - atomic operation
 export function pauseGame() {
+	const now = Date.now();
+	
 	gameState.update(s => ({
 		...s,
-		isPaused: true
+		isPaused: true,
+		pauseStartTime: now
 	}));
 
-	cache.update(c => ({
-		...c,
-		gameState: false
-	}));
-
-	// Pause all element timers
-	pauseElementTimers();
+	cache.update(c => ({ ...c, gameState: false }));
 	
-	// Clear spawn timer
-	if (spawnTimeout) {
-		clearTimeout(spawnTimeout);
-		spawnTimeout = null;
-	}
+	// Timer manager handles pause automatically via subscription
 }
 
-// Resume the game
+// Resume the game - atomic operation
 export function resumeGame() {
 	const state = get(gameState);
 	if (!state.isActive) return;
 
+	const now = Date.now();
+	const pauseDuration = state.pauseStartTime > 0 ? now - state.pauseStartTime : 0;
+
 	gameState.update(s => ({
 		...s,
-		isPaused: false
+		isPaused: false,
+		pauseStartTime: 0,
+		totalPausedTime: s.totalPausedTime + pauseDuration,
+		lastSpawnTime: now // Reset spawn timing
 	}));
 
-	cache.update(c => ({
-		...c,
-		gameState: true
-	}));
-
-	// Resume element timers
-	resumeElementTimers();
+	cache.update(c => ({ ...c, gameState: true }));
 	
-	// Schedule next spawn
-	scheduleNextSpawn();
+	// Timer manager handles resume automatically via subscription
 }
 
-// Quit the game
+// Quit the game - cleanup everything
 export function quitGame() {
-	stopAllTimers();
+	timerManager.clearAllTimers();
 	
 	gameState.update(s => ({
 		...s,
@@ -139,7 +286,11 @@ export function quitGame() {
 		isPaused: true,
 		isGameOver: false,
 		elements: [],
-		score: 0
+		score: 0,
+		gameStartTime: 0,
+		lastSpawnTime: 0,
+		pauseStartTime: 0,
+		totalPausedTime: 0
 	}));
 
 	cache.update(c => ({
@@ -152,7 +303,7 @@ export function quitGame() {
 	}));
 }
 
-// Process user input
+// Process user input - atomic operation
 export function processInput(input) {
 	const state = get(gameState);
 	if (!state.isActive || state.isPaused) return false;
@@ -160,55 +311,106 @@ export function processInput(input) {
 	const answer = parseInt(input.trim());
 	if (isNaN(answer)) return false;
 
-	// Check each element for correct answer
-	for (let i = 0; i < state.elements.length; i++) {
-		const element = state.elements[i];
-		if (validateAnswer(element.equation, answer)) {
-			// Correct answer!
-			const newScore = state.score + 1;
-			let newHealth = state.health;
+	// Find correct element
+	const correctElementIndex = state.elements.findIndex(element =>
+		validateAnswer(element.equation, answer)
+	);
 
-			// Golden element gives health
-			if (element.isGolden && newHealth < state.maxHealth) {
-				newHealth++;
-			}
+	if (correctElementIndex === -1) return false;
 
-			// Remove element from state
-			gameState.update(s => ({
-				...s,
-				elements: s.elements.filter(el => el.id !== element.id),
-				score: newScore,
-				health: newHealth
-			}));
+	const correctElement = state.elements[correctElementIndex];
+	let newHealth = state.health;
 
-			// Update cache
-			cache.update(c => ({
-				...c,
-				score: newScore,
-				hp: newHealth,
-				userInput: ''
-			}));
-
-			// Clear the element's timeout
-			if (elementTimeouts.has(element.id)) {
-				clearTimeout(elementTimeouts.get(element.id));
-				elementTimeouts.delete(element.id);
-			}
-
-			// Spawn replacement element
-			setTimeout(() => {
-				const currentState = get(gameState);
-				if (currentState.isActive && !currentState.isPaused) {
-					spawnElement();
-				}
-			}, 100);
-
-			return true;
-		}
+	// Handle golden element bonus
+	if (correctElement.isGolden && newHealth < state.maxHealth) {
+		newHealth++;
 	}
 
-	return false;
+	// Atomic state update
+	gameState.update(s => {
+		const newElements = s.elements.filter((_, index) => index !== correctElementIndex);
+		const newScore = s.score + 1;
+
+		return {
+			...s,
+			elements: newElements,
+			score: newScore,
+			health: newHealth
+		};
+	});
+
+	// Sync cache
+	cache.update(c => ({
+		...c,
+		score: state.score + 1,
+		hp: newHealth,
+		userInput: ''
+	}));
+
+	// Clear the element's timer
+	timerManager.clearElementTimer(correctElement.id);
+
+	// Spawn replacement element after short delay
+	setTimeout(() => {
+		const currentState = get(gameState);
+		if (currentState.isActive && !currentState.isPaused) {
+			spawnElement();
+		}
+	}, 100);
+
+	return true;
 }
+
+// Element expiration handler
+timerManager.onElementExpire = function(element) {
+	const state = get(gameState);
+	const now = Date.now();
+
+	// Record missed equation
+	missed_eq_list.update(list => {
+		const existingIndex = list.findIndex(
+			item => item.equation === element.equation.displayText
+		);
+		if (existingIndex >= 0) {
+			list[existingIndex].times++;
+			list[existingIndex].lastMissed = now;
+		} else {
+			list.push({
+				equation: element.equation.displayText,
+				answer: element.equation.answer,
+				difficulty: element.equation.difficulty,
+				times: 1,
+				lastMissed: now
+			});
+		}
+		return list;
+	});
+
+	// Atomic state update
+	const newHealth = Math.max(0, state.health - 1);
+	
+	gameState.update(s => ({
+		...s,
+		elements: s.elements.filter(el => el.id !== element.id),
+		health: newHealth
+	}));
+
+	// Sync cache
+	cache.update(c => ({ ...c, hp: newHealth }));
+
+	// Check game over
+	if (newHealth <= 0) {
+		handleGameOver();
+	} else {
+		// Spawn replacement
+		spawnElement();
+	}
+};
+
+// Spawn element handler
+timerManager.onSpawnElement = function() {
+	spawnElement();
+};
 
 // Update field dimensions
 export function updateFieldDimensions(dimensions) {
@@ -270,158 +472,22 @@ function spawnElement() {
 		state: 'normal'
 	};
 
-	// Add element to state
+	// Atomic state update
 	gameState.update(s => ({
 		...s,
 		elements: [...s.elements, newElement],
 		idCounter: elementId
 	}));
 
-	// Schedule element expiration
-	scheduleElementExpiration(newElement);
-}
-
-// Schedule element expiration
-function scheduleElementExpiration(element) {
-	const timeoutId = setTimeout(() => {
-		const state = get(gameState);
-		if (!state.isActive || state.isPaused) return;
-
-		// Element expired - remove it and lose health
-		const newHealth = Math.max(0, state.health - 1);
-
-		// Record missed equation
-		missed_eq_list.update(list => {
-			const existingIndex = list.findIndex(
-				item => item.equation === element.equation.displayText
-			);
-			if (existingIndex >= 0) {
-				list[existingIndex].times++;
-				list[existingIndex].lastMissed = Date.now();
-			} else {
-				list.push({
-					equation: element.equation.displayText,
-					answer: element.equation.answer,
-					difficulty: element.equation.difficulty,
-					times: 1,
-					lastMissed: Date.now()
-				});
-			}
-			return list;
-		});
-
-		// Update state
-		gameState.update(s => ({
-			...s,
-			elements: s.elements.filter(el => el.id !== element.id),
-			health: newHealth
-		}));
-
-		// Update cache
-		cache.update(c => ({
-			...c,
-			hp: newHealth
-		}));
-
-		// Clean up timeout
-		elementTimeouts.delete(element.id);
-
-		// Check game over
-		if (newHealth <= 0) {
-			handleGameOver();
-		} else {
-			// Spawn replacement
-			spawnElement();
-		}
-	}, element.lifetime);
-
-	elementTimeouts.set(element.id, timeoutId);
-}
-
-// Schedule next element spawn
-function scheduleNextSpawn() {
-	const state = get(gameState);
-	if (!state.config || state.isPaused) return;
-
-	spawnTimeout = setTimeout(() => {
-		const currentState = get(gameState);
-		if (currentState.isActive && !currentState.isPaused) {
-			spawnElement();
-			scheduleNextSpawn(); // Schedule the next one
-		}
-	}, state.config.spawnInterval);
-}
-
-// Pause all element timers
-function pauseElementTimers() {
-	const state = get(gameState);
-	const now = Date.now();
-	
-	// Mark all elements with pause time
-	gameState.update(s => ({
-		...s,
-		elements: s.elements.map(el => ({
-			...el,
-			pausedAt: now,
-			remainingTime: el.lifetime - (now - el.startTime)
-		}))
-	}));
-
-	// Clear all timeouts
-	elementTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
-	elementTimeouts.clear();
-}
-
-// Resume all element timers
-function resumeElementTimers() {
-	const state = get(gameState);
-	const now = Date.now();
-
-	// Resume elements with adjusted timing
-	gameState.update(s => ({
-		...s,
-		elements: s.elements.map(el => {
-			if (el.pausedAt && el.remainingTime > 0) {
-				return {
-					...el,
-					startTime: now - (el.lifetime - el.remainingTime),
-					pausedAt: undefined,
-					remainingTime: undefined
-				};
-			}
-			return el;
-		})
-	}));
-
-	// Reschedule element expirations
-	state.elements.forEach(element => {
-		if (element.remainingTime > 0) {
-			scheduleElementExpiration({
-				...element,
-				lifetime: element.remainingTime
-			});
-		}
-	});
-}
-
-// Stop all timers
-function stopAllTimers() {
-	// Clear all element timeouts
-	elementTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
-	elementTimeouts.clear();
-	
-	// Clear spawn timeout
-	if (spawnTimeout) {
-		clearTimeout(spawnTimeout);
-		spawnTimeout = null;
-	}
+	// Schedule expiration
+	timerManager.scheduleElementExpiration(newElement, timerManager.onElementExpire);
 }
 
 // Handle game over
 function handleGameOver() {
 	const state = get(gameState);
 	
-	stopAllTimers();
+	timerManager.clearAllTimers();
 	
 	gameState.update(s => ({
 		...s,
@@ -442,12 +508,9 @@ function handleGameOver() {
 		return records;
 	});
 
-	cache.update(c => ({
-		...c,
-		gameState: false
-	}));
+	cache.update(c => ({ ...c, gameState: false }));
 
-	// Reset after animation and return to difficulty selection
+	// Reset after animation
 	setTimeout(() => {
 		gameState.update(s => ({
 			...s,
@@ -457,7 +520,6 @@ function handleGameOver() {
 			isPaused: true
 		}));
 
-		// Reset to difficulty selection
 		cache.update(c => ({
 			...c,
 			diff: 'Null',
@@ -480,6 +542,13 @@ function handleVisibilityChange() {
 if (typeof document !== 'undefined') {
 	document.addEventListener('visibilitychange', handleVisibilityChange);
 	window.addEventListener('blur', handleVisibilityChange);
+}
+
+// Cleanup timer manager on module unload
+if (typeof window !== 'undefined') {
+	window.addEventListener('beforeunload', () => {
+		timerManager.destroy();
+	});
 }
 
 // Derived stores for easy component access

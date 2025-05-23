@@ -120,6 +120,7 @@
 		position: relative;
 		z-index: 20;
 		overflow: hidden;
+		padding-top: 0.5rem;
 	}
 
 	/* Mobile Aside Overlay */
@@ -146,8 +147,7 @@
 	.layout-overlay {
 		position: fixed;
 		top: 0;
-		left: 0;
-		width: 100%;
+		width: 80vw;
 		height: 100%;
 		z-index: 200;
 		pointer-events: none;

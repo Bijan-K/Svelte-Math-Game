@@ -1,7 +1,7 @@
-<!-- src/lib/tabs/play/PlayContainer.svelte -->
+<!-- src/lib/tabs/play/PlayContainer.svelte - FINAL VERSION -->
 <script>
 	import { fade } from 'svelte/transition';
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 
 	// Layout Components
 	import ResponsiveGameLayout from './layout/ResponsiveGameLayout.svelte';
@@ -43,6 +43,9 @@
 		updateFieldDimensions
 	} from '$lib/stores/gameStore.js';
 
+	// Input State Machine
+	import { inputStateMachine } from './input/InputStateMachine.js';
+
 	// Game state - derived from stores
 	$: gameElements = $elements;
 	$: gameScore = $score;
@@ -55,72 +58,159 @@
 	let gameFieldReady = false;
 	let inputManager;
 
+	// Component cleanup
+	let cleanupFunctions = [];
+
 	// Determine current screen state
 	$: showStartScreen =
 		gamePaused && !gameOver && ($cache.diff === 'Null' || gameElements.length === 0);
 	$: showPauseScreen = gamePaused && !gameOver && $cache.diff !== 'Null' && gameElements.length > 0;
 	$: showGameUI = !showStartScreen && !gameOver;
 
+	onMount(() => {
+		// Initialize input state machine with game callbacks
+		initializeInputSystem();
+
+		// Set up any additional cleanup
+		cleanupFunctions.push(() => {
+			// Reset input state machine on unmount
+			inputStateMachine.reset();
+		});
+	});
+
+	onDestroy(() => {
+		// Run all cleanup functions
+		cleanupFunctions.forEach((cleanup) => {
+			try {
+				cleanup();
+			} catch (error) {
+				console.warn('Error during cleanup:', error);
+			}
+		});
+		cleanupFunctions = [];
+	});
+
+	function initializeInputSystem() {
+		// Initialize the input state machine with our game control callbacks
+		inputStateMachine.init({
+			onProcessInput: handleProcessInput,
+			onStartGame: handleStartGame,
+			onPauseGame: handlePauseGame,
+			onResumeGame: handleResumeGame,
+			onQuitGame: handleQuitGame
+		});
+	}
+
 	// Handle game field readiness
 	function handleFieldReady(fieldInfo) {
-		gameFieldReady = true;
-		updateFieldDimensions(fieldInfo);
+		try {
+			gameFieldReady = true;
+			updateFieldDimensions(fieldInfo);
+			console.log('Game field ready:', fieldInfo);
+		} catch (error) {
+			console.error('Error handling field ready:', error);
+		}
 	}
 
 	// Game control handlers
 	function handleStartGame() {
-		console.log('Starting game with difficulty:', $cache.diff);
+		try {
+			console.log('Starting game with difficulty:', $cache.diff);
 
-		if ($cache.diff === 'Null') {
-			console.error('No difficulty selected');
-			return;
-		}
+			if ($cache.diff === 'Null') {
+				console.error('No difficulty selected');
+				return false;
+			}
 
-		// Initialize game configuration
-		const config = initializeGame($cache.diff, $cache.customConfig);
-		console.log('Game initialized with config:', config);
+			// Initialize game configuration
+			const config = initializeGame($cache.diff, $cache.customConfig);
+			console.log('Game initialized with config:', config);
 
-		// Start the game
-		const started = startGame();
-		if (started) {
-			console.log('Game started successfully');
-		} else {
-			console.error('Failed to start game');
+			// Start the game
+			const started = startGame();
+			if (started) {
+				console.log('Game started successfully');
+				return true;
+			} else {
+				console.error('Failed to start game');
+				return false;
+			}
+		} catch (error) {
+			console.error('Error starting game:', error);
+			return false;
 		}
 	}
 
 	function handlePauseGame() {
-		console.log('Pausing game');
-		pauseGame();
+		try {
+			console.log('Pausing game');
+			pauseGame();
+			return true;
+		} catch (error) {
+			console.error('Error pausing game:', error);
+			return false;
+		}
 	}
 
 	function handleResumeGame() {
-		console.log('Resuming game');
-		resumeGame();
+		try {
+			console.log('Resuming game');
+			resumeGame();
+			return true;
+		} catch (error) {
+			console.error('Error resuming game:', error);
+			return false;
+		}
 	}
 
 	function handleQuitGame() {
-		console.log('Quitting game');
-		quitGame();
+		try {
+			console.log('Quitting game');
+			quitGame();
+
+			// Reset input state
+			inputStateMachine.reset();
+			return true;
+		} catch (error) {
+			console.error('Error quitting game:', error);
+			return false;
+		}
 	}
 
 	function handleProcessInput(input) {
-		console.log('Processing input:', input);
-		const processed = processInput(input);
-		if (processed) {
-			console.log('Input processed successfully');
+		try {
+			console.log('Processing input:', input);
+			const processed = processInput(input);
+
+			if (processed) {
+				console.log('Input processed successfully');
+			} else {
+				console.log('Input processing failed or no match found');
+			}
+
+			return processed;
+		} catch (error) {
+			console.error('Error processing input:', error);
+			return false;
 		}
 	}
 
 	// Mobile numpad handling
 	function handleKeyboardRequest(useDevice) {
-		useDeviceKeyboard = useDevice;
-		if (inputManager) {
-			inputManager.switchInputMode(useDevice ? 'mobile-keyboard' : 'mobile-numpad');
+		try {
+			useDeviceKeyboard = useDevice;
+
+			// The InputManager will handle mode switching through the state machine
+			if (inputManager) {
+				const newMode = useDevice ? 'mobile-keyboard' : 'mobile-numpad';
+				inputManager.switchInputMode(newMode);
+			}
+		} catch (error) {
+			console.error('Error handling keyboard request:', error);
 		}
 	}
 
-	// Debug logging
+	// Debug logging for state changes
 	$: if ($gameState) {
 		console.log('Game state updated:', {
 			isActive: $gameState.isActive,
@@ -128,24 +218,32 @@
 			isGameOver: $gameState.isGameOver,
 			elements: $gameState.elements.length,
 			score: $gameState.score,
-			health: $gameState.health
+			health: $gameState.health,
+			difficulty: $cache.diff
 		});
+	}
+
+	// Debug: Log input state machine changes in development
+	$: if (typeof window !== 'undefined' && window.__inputStateMachine) {
+		const debugInfo = inputStateMachine.getDebugInfo();
+		console.log('Input state machine debug:', debugInfo);
 	}
 </script>
 
 <div class="play-container">
-	<ResponsiveGameLayout showAside={false}>
-		<!-- Input Manager -->
-		<InputManager
-			bind:this={inputManager}
-			isGamePaused={gamePaused}
-			onStartGame={handleStartGame}
-			onPauseGame={handlePauseGame}
-			onResumeGame={handleResumeGame}
-			onQuitGame={handleQuitGame}
-			onProcessInput={handleProcessInput}
-		/>
+	<!-- Input Manager - Outside layout since it's non-visual -->
+	<!-- This component coordinates all input through the InputStateMachine -->
+	<InputManager
+		bind:this={inputManager}
+		isGamePaused={gamePaused}
+		onStartGame={handleStartGame}
+		onPauseGame={handlePauseGame}
+		onResumeGame={handleResumeGame}
+		onQuitGame={handleQuitGame}
+		onProcessInput={handleProcessInput}
+	/>
 
+	<ResponsiveGameLayout showAside={false}>
 		<!-- Game Field -->
 		<div slot="game-field">
 			<GameField elements={gameElements} onFieldReady={handleFieldReady} />
@@ -209,6 +307,23 @@
 			{useDeviceKeyboard}
 		/>
 	{/if}
+
+	<!-- Development Debug Panel -->
+	{#if false}
+		<div class="debug-panel">
+			<h3>Game State Debug</h3>
+			<div>Difficulty: {$cache.diff}</div>
+			<div>Game Active: {gameActive ? 'Yes' : 'No'}</div>
+			<div>Game Paused: {gamePaused ? 'Yes' : 'No'}</div>
+			<div>Game Over: {gameOver ? 'Yes' : 'No'}</div>
+			<div>Elements: {gameElements.length}</div>
+			<div>Score: {gameScore}</div>
+			<div>Health: {$health}/{$maxHealth}</div>
+			<div>Input Mode: {inputStateMachine.getState().mode}</div>
+			<div>Input Value: "{inputStateMachine.getState().input}"</div>
+			<div>Can Process: {inputStateMachine.getState().canProcess ? 'Yes' : 'No'}</div>
+		</div>
+	{/if}
 </div>
 
 <style>
@@ -226,7 +341,6 @@
 	.overlay-screen {
 		position: absolute;
 		top: 0;
-		left: 20%;
 		right: 0;
 		bottom: 0;
 		width: 80vw;
@@ -337,8 +451,42 @@
 		box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 	}
 
+	/* Debug Panel */
+	.debug-panel {
+		position: fixed;
+		top: 10px;
+		right: 10px;
+		background: rgba(0, 0, 0, 0.9);
+		color: #0f0;
+		padding: 1rem;
+		border-radius: 8px;
+		font-family: monospace;
+		font-size: 0.8rem;
+		z-index: 9999;
+		pointer-events: none;
+		border: 1px solid #333;
+		max-width: 250px;
+		backdrop-filter: blur(4px);
+	}
+
+	.debug-panel h3 {
+		margin: 0 0 0.5rem 0;
+		color: #0ff;
+		font-size: 0.9rem;
+	}
+
+	.debug-panel div {
+		margin-bottom: 0.25rem;
+		word-break: break-all;
+	}
+
 	/* Mobile Adjustments */
 	@media (max-width: 768px) {
+		.overlay-screen {
+			left: 0;
+			width: 100vw;
+		}
+
 		.pause-content {
 			padding: 1.5rem;
 			width: 90%;
@@ -361,6 +509,14 @@
 		.quit-btn {
 			width: 100%;
 		}
+
+		.debug-panel {
+			top: 5px;
+			right: 5px;
+			padding: 0.5rem;
+			font-size: 0.7rem;
+			max-width: 200px;
+		}
 	}
 
 	/* High Contrast Mode */
@@ -373,6 +529,11 @@
 		kbd {
 			border-color: #fff;
 		}
+
+		.debug-panel {
+			border-color: #fff;
+			background: #000;
+		}
 	}
 
 	/* Reduced Motion */
@@ -380,6 +541,11 @@
 		.resume-btn,
 		.quit-btn {
 			transition: none;
+		}
+
+		.resume-btn:hover,
+		.quit-btn:hover {
+			transform: none;
 		}
 	}
 </style>
