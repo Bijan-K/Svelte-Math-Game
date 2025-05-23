@@ -286,8 +286,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: clamp(1.5rem, 4vw, 2.5rem);
-		min-height: 100%;
-		justify-content: center;
+		height: 100dvh;
 	}
 
 	/* Header */

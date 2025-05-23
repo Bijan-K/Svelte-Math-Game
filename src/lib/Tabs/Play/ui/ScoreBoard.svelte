@@ -3,8 +3,8 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { cache } from '$lib/stores.js';
 	import { viewport } from '../layout/viewportStore';
-	import { fade, scale } from 'svelte/transition';
-	import { gameState, score, health, maxHealth, isGameActive } from '$lib/stores/gameStore.js';
+	import { scale } from 'svelte/transition';
+	import { score, health, maxHealth, isGameActive } from '$lib/stores/gameStore.js';
 	import { inputStateMachine } from '../input/InputStateMachine.js';
 
 	// Props for game control

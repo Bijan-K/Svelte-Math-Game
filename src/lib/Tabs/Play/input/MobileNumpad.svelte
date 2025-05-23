@@ -7,7 +7,7 @@
 	import { inputStateMachine } from './InputStateMachine.js';
 
 	export let onRequestKeyboard = () => {};
-	export let onProcessInput = () => {};
+	export let onProcessInput = () => {}; // This prop seems unused as component calls state machine directly
 	export let useDeviceKeyboard = false;
 
 	// Input state from state machine
@@ -27,7 +27,7 @@
 	$: isNumpadMode = inputState.mode === 'mobile-numpad';
 	$: isKeyboardMode = inputState.mode === 'mobile-keyboard';
 
-	// Numpad layout - traditional phone style
+	// Numpad layout - traditional phone style with an Enter button
 	const numpadLayout = [
 		[
 			{ value: '1', label: '1', type: 'number' },
@@ -48,6 +48,10 @@
 			{ value: '-', label: '±', type: 'special', title: 'Negative sign' },
 			{ value: '0', label: '0', type: 'number' },
 			{ value: 'backspace', label: '⌫', type: 'special', title: 'Delete' }
+		],
+		[
+			// New row for the Enter button
+			{ value: 'enter', label: 'ENTER', type: 'action', title: 'Submit Answer' }
 		]
 	];
 
@@ -91,7 +95,10 @@
 		try {
 			switch (value) {
 				case 'enter':
-					inputStateMachine.processInput();
+					// Only process if there's valid input and not already processing
+					if (inputState.canProcess) {
+						inputStateMachine.processInput();
+					}
 					break;
 
 				case 'backspace':
@@ -158,7 +165,9 @@
 		try {
 			if (event.key === 'Enter') {
 				event.preventDefault();
-				inputStateMachine.processInput();
+				if (inputState.canProcess) {
+					inputStateMachine.processInput();
+				}
 
 				// Keep focus for continuous input
 				setTimeout(() => {
@@ -215,7 +224,7 @@
 							on:click={() => handleInput('keyboard')}
 							aria-label="Switch to device keyboard"
 							title="Use device keyboard"
-							disabled={inputState.isProcessing}
+							disabled={inputState.isProcessing || !$cache.gameState}
 						>
 							<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
 								<path
@@ -234,33 +243,20 @@
 								<button
 									class="numpad-button"
 									class:special={button.type === 'special'}
+									class:enter-button={button.type === 'action'}
+									class:can-process={button.type === 'action' && inputState.canProcess}
 									on:click={() => handleInput(button.value)}
-									aria-label={button.title || `${button.type} ${button.value}`}
+									aria-label={button.title || `${button.type} ${button.label}`}
 									title={button.title}
-									disabled={!$cache.gameState || inputState.isProcessing}
+									disabled={!$cache.gameState ||
+										inputState.isProcessing ||
+										(button.type === 'action' && !inputState.canProcess)}
 								>
 									{button.label}
 								</button>
 							{/each}
 						</div>
 					{/each}
-
-					<!-- Enter Button (full width) -->
-					<div class="numpad-row">
-						<button
-							class="numpad-button enter-button"
-							on:click={() => handleInput('enter')}
-							aria-label="Submit answer"
-							disabled={!$cache.gameState || !inputState.canProcess || inputState.isProcessing}
-							class:can-process={inputState.canProcess}
-						>
-							{#if inputState.isProcessing}
-								Processing...
-							{:else}
-								Enter Answer
-							{/if}
-						</button>
-					</div>
 				</div>
 			</div>
 		{:else if isKeyboardMode}
@@ -273,7 +269,7 @@
 						on:click={() => handleInput('keyboard')}
 						aria-label="Switch to custom numpad"
 						title="Use custom numpad"
-						disabled={inputState.isProcessing}
+						disabled={inputState.isProcessing || !$cache.gameState}
 					>
 						<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
 							<path
@@ -320,6 +316,13 @@
 {/if}
 
 <style>
+	/* .numpad-row .full-span class is not strictly needed if button is alone in a flex row */
+	/* but kept for potential future use or clarity if grid layout is adopted for rows */
+	.numpad-row .full-span {
+		grid-column: span 3; /* Assumes parent .numpad-row might use grid */
+		/* If .numpad-row is flex (as it is), a single child with flex:1 already spans */
+	}
+
 	.numpad-container {
 		position: fixed;
 		bottom: 0;
@@ -329,7 +332,7 @@
 		background: rgba(0, 0, 0, 0.95);
 		backdrop-filter: blur(10px);
 		border-top: 2px solid var(--primary-color);
-		max-height: 40vh;
+		max-height: 55vh; /* Adjusted slightly for new row */
 		overflow: hidden;
 	}
 
@@ -423,7 +426,7 @@
 
 	.numpad-button {
 		flex: 1;
-		height: clamp(48px, 12vw, 60px);
+		height: clamp(48px, 10vw, 55px); /* Adjusted for potentially more rows */
 		border: 2px solid var(--primary-color);
 		background: rgba(255, 255, 255, 0.05);
 		color: #fff;
@@ -478,6 +481,7 @@
 	}
 
 	.enter-button {
+		/* Styles for the Enter button */
 		background: var(--primary-color);
 		border-color: var(--primary-color);
 		font-size: clamp(0.9rem, 3vw, 1.2rem);
@@ -488,20 +492,30 @@
 	}
 
 	.enter-button.can-process {
+		/* When Enter button can be pressed */
 		background: var(--accent-color);
 		border-color: var(--accent-color);
-		box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+		box-shadow: 0 0 10px var(--accent-color);
 	}
 
 	.enter-button:active:not(:disabled) {
-		background: var(--accent-color);
+		background: var(--accent-color); /* Keep accent on active */
 		border-color: var(--accent-color);
+		transform: scale(0.95);
 	}
 
+	/* General disabled style for enter button will be inherited from .numpad-button:disabled */
+	/* Override if specific disabled style for enter button is needed */
 	.enter-button:disabled {
-		background: rgba(255, 255, 255, 0.1);
-		border-color: rgba(255, 255, 255, 0.2);
-		color: rgba(255, 255, 255, 0.4);
+		opacity: 0.4; /* Slightly different opacity if needed */
+		background: rgba(100, 100, 100, 0.2); /* Darker disabled background */
+		border-color: rgba(120, 120, 120, 0.3);
+		color: rgba(255, 255, 255, 0.3);
+	}
+	.enter-button.can-process:disabled {
+		/* This case should ideally not happen if logic is correct */
+		background: var(--primary-color); /* Revert if can-process but disabled by other means */
+		border-color: var(--primary-color);
 	}
 
 	/* Device Keyboard Mode */
@@ -613,11 +627,22 @@
 	}
 
 	/* Responsive Adjustments */
+	@media (max-height: 700px) {
+		/* Adjusted for potentially taller numpad */
+		.numpad-button {
+			height: clamp(40px, 8vw, 50px);
+		}
+		.numpad-container {
+			max-height: 50vh;
+		}
+	}
 	@media (max-height: 600px) {
 		.numpad-button {
-			height: clamp(40px, 10vw, 50px);
+			height: clamp(38px, 7vw, 45px);
 		}
-
+		.numpad-container {
+			max-height: 55vh; /* Allow more height if screen is short */
+		}
 		.numpad-grid {
 			gap: clamp(0.25rem, 1.5vw, 0.5rem);
 		}
@@ -660,7 +685,9 @@
 		.numpad-button,
 		.keyboard-toggle,
 		.device-input,
-		.input-value {
+		.input-value,
+		.enter-button {
+			/* Added enter-button */
 			transition: none;
 		}
 
