@@ -1,4 +1,4 @@
-// src/lib/stores/gameStore.js - FIXED VERSION
+// src/lib/stores/gameStore.js
 import { writable, derived, get } from 'svelte/store';
 import { cache, record, missed_eq_list } from '../stores.js';
 import { getTodaysDateFormatted } from '../functions.js';

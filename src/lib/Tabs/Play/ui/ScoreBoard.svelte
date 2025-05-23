@@ -1,4 +1,4 @@
-<!-- src/lib/tabs/play/ui/ScoreBoard.svelte - UPDATED -->
+<!-- src/lib/tabs/play/ui/ScoreBoard.svelte -->
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import { cache } from '$lib/stores.js';

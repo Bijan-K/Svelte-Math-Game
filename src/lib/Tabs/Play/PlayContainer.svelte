@@ -1,4 +1,4 @@
-<!-- src/lib/tabs/play/PlayContainer.svelte - FINAL VERSION -->
+<!-- src/lib/tabs/play/PlayContainer.svelte -->
 <script>
 	import { fade } from 'svelte/transition';
 	import { onMount, onDestroy } from 'svelte';
