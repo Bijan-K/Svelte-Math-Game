@@ -1,4 +1,4 @@
-<!-- src/lib/aside/Components/PlayAside.svelte -->
+<!-- src/lib/aside/PlayAside.svelte -->
 <script>
 	import { fade } from 'svelte/transition';
 	import { cache } from '$lib/stores.js';

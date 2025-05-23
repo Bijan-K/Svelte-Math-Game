@@ -2,10 +2,10 @@
 <script>
 	import { fade } from 'svelte/transition';
 	import { modeState } from '$lib/stores.js';
-	import PlayAside from './Components/PlayAside.svelte';
 	import MinusIcon from '$lib/Icons/MinusIcon.svelte';
 	import AddIcon from '$lib/Icons/AddIcon.svelte';
 	import AsideSetting from './AsideSetting.svelte';
+	import PlayAside from './PlayAside.svelte';
 
 	$: $modeState;
 </script>
