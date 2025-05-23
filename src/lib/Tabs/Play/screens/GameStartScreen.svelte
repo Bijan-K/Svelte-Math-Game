@@ -323,7 +323,7 @@
 
 	.difficulty-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 		gap: clamp(1rem, 3vw, 1.5rem);
 		width: 100%;
 	}

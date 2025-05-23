@@ -149,7 +149,7 @@
 		top: 0;
 		width: 80vw;
 		height: 100%;
-		z-index: 200;
+		z-index: 10;
 		pointer-events: none;
 	}
 

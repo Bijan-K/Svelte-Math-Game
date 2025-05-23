@@ -7,7 +7,6 @@
 	import { inputStateMachine } from './InputStateMachine.js';
 
 	export let onRequestKeyboard = () => {};
-	export let onProcessInput = () => {}; // This prop seems unused as component calls state machine directly
 	export let useDeviceKeyboard = false;
 
 	// Input state from state machine
@@ -303,7 +302,7 @@
 		{/if}
 
 		<!-- State indicator for debugging -->
-		{#if false}
+		{#if true}
 			<div class="state-indicator">
 				<div>Mode: {inputState.mode}</div>
 				<div>Input: "{inputState.input}"</div>
@@ -316,13 +315,6 @@
 {/if}
 
 <style>
-	/* .numpad-row .full-span class is not strictly needed if button is alone in a flex row */
-	/* but kept for potential future use or clarity if grid layout is adopted for rows */
-	.numpad-row .full-span {
-		grid-column: span 3; /* Assumes parent .numpad-row might use grid */
-		/* If .numpad-row is flex (as it is), a single child with flex:1 already spans */
-	}
-
 	.numpad-container {
 		position: fixed;
 		bottom: 0;
@@ -623,7 +615,7 @@
 	}
 
 	.device-input[type='number'] {
-		-moz-appearance: textfield;
+		--moz-appearance: textfield;
 	}
 
 	/* Responsive Adjustments */

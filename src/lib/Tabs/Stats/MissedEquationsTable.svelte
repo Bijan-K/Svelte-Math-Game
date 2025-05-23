@@ -5,10 +5,13 @@
 	import NotVisibleIcon from '$lib/Icons/NotVisibleIcon.svelte';
 
 	let showAnswers = false;
-	let sortBy = 'times'; // 'times', 'difficulty', 'recent'
+	let sortBy = 'times'; // 'times', 'difficulty', 'recent', 'equation'
 	let sortDirection = 'desc';
 
+	let itemsToShow = 7;
+
 	$: sortedEquations = sortEquations($missed_eq_list, sortBy, sortDirection);
+	$: displayedEquations = sortedEquations.slice(0, itemsToShow);
 
 	function sortEquations(equations, sortBy, direction) {
 		if (!equations || equations.length === 0) return [];
@@ -22,18 +25,28 @@
 					bVal = b.times;
 					break;
 				case 'difficulty':
-					aVal = a.difficulty || 1;
+					aVal = a.difficulty || 1; // Default difficulty if undefined
 					bVal = b.difficulty || 1;
 					break;
 				case 'recent':
-					aVal = a.lastMissed || 0;
+					aVal = a.lastMissed || 0; // Default timestamp if undefined
 					bVal = b.lastMissed || 0;
 					break;
-				default:
+				case 'equation': // Added sorting by equation string
+					const strA = a.equation || '';
+					const strB = b.equation || '';
+					if (direction === 'asc') {
+						return strA.localeCompare(strB);
+					} else {
+						return strB.localeCompare(strA);
+					}
+				default: // Fallback to sorting by times if sortBy is unrecognized
 					aVal = a.times;
 					bVal = b.times;
 			}
 
+			// Numeric/Date comparison for cases other than 'equation'
+			// (The 'equation' case returns directly)
 			if (direction === 'asc') {
 				return aVal - bVal;
 			} else {
@@ -53,8 +66,9 @@
 			sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
 		} else {
 			sortBy = newSortBy;
-			sortDirection = 'desc';
+			sortDirection = 'desc'; // Default to descending for a new sort column
 		}
+		// itemsToShow = INITIAL_ITEMS_TO_SHOW; // Optional: Uncomment to reset to 10 items on sort
 	}
 
 	function getDifficultyBadge(difficulty) {
@@ -71,6 +85,10 @@
 	function getSortIcon(column) {
 		if (sortBy !== column) return '↕️';
 		return sortDirection === 'asc' ? '↑' : '↓';
+	}
+
+	function viewMore() {
+		itemsToShow = sortedEquations.length;
 	}
 </script>
 
@@ -128,7 +146,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					{#each sortedEquations as equation, index}
+					{#each displayedEquations as equation, index (equation.id || index)}
 						<tr class="equation-row" class:high-priority={equation.times >= 3}>
 							<td class="equation-cell">
 								<div class="equation-text">{equation.equation}</div>
@@ -158,6 +176,15 @@
 					{/each}
 				</tbody>
 			</table>
+
+			{#if sortedEquations.length > itemsToShow}
+				<!-- Move this outside the table -->
+				<div class="view-more-container">
+					<button class="view-more-btn" on:click={viewMore}>
+						View More ({sortedEquations.length - itemsToShow} more)
+					</button>
+				</div>
+			{/if}
 		</div>
 
 		<div class="table-footer">
@@ -252,7 +279,7 @@
 
 		.table-container {
 			width: 100%;
-			overflow-x: hidden;
+			/* Removed overflow-x: hidden; to allow table-wrapper scroll */
 		}
 	}
 
@@ -437,13 +464,33 @@
 			gap: 0.5rem;
 		}
 
-		.equations-table {
-			font-size: 0.8rem;
-		}
+		/* .equations-table font-size is already defined for this breakpoint above */
 
 		.equations-table th,
 		.equations-table td {
 			padding: 0.5rem;
 		}
+	}
+
+	/* New styles for View More button */
+	.view-more-container {
+		width: 100%;
+	}
+
+	.view-more-btn {
+		padding: 0.75rem 1.5rem;
+		background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05));
+		border: 1px solid #e0e0e0;
+		color: white;
+		border-radius: 8px;
+		cursor: pointer;
+		font-size: 1rem;
+		font-weight: 600;
+		width: 100%;
+		/* Shadow like aesthetic */
+		box-shadow:
+			0 4px 8px rgba(0, 0, 0, 0.2),
+			0 6px 20px rgba(0, 0, 0, 0.15);
+		letter-spacing: 0.025em;
 	}
 </style>
