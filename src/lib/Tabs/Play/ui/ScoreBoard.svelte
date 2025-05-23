@@ -97,7 +97,7 @@
 
 	function getDisplayText(diff, gameActive, userInput, score) {
 		if (!gameActive) {
-			return diff !== 'Null' ? `READY: ${diff.toUpperCase()}` : 'SELECT MODE';
+			return diff !== 'Null' ? `${diff.toUpperCase()}` : 'SELECT MODE';
 		}
 		// Show score when no input, or when on mobile (input shown separately)
 		if ($viewport.isMobile || (!userInput && !isGamePaused)) {

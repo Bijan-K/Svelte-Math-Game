@@ -77,11 +77,24 @@
 
 	function getElementStyle(element) {
 		const pos = getConstrainedPosition(element);
+		// Use CSS custom property for progress animation
 		return `
 			left: ${pos.x}px; 
 			top: ${pos.y}px;
-			--progress: ${element.progress}%;
+			--progress: ${element.progress || 100};
 		`;
+	}
+
+	function getProgressColor(progress, isGolden) {
+		if (isGolden) {
+			if (progress < 20) return '#ff6b6b';
+			if (progress < 50) return '#ffd93d';
+			return '#ffd700';
+		}
+
+		if (progress < 20) return '#ff4444';
+		if (progress < 50) return '#ff9f00';
+		return '#4caf50';
 	}
 
 	// Handle resize events
@@ -139,7 +152,7 @@
 				class:golden={element.isGolden}
 				class:correct={element.state === 'correct'}
 				class:missed={element.state === 'missed'}
-				class:expiring={element.isExpiring}
+				class:expiring={element.isExpiring || element.progress < 20}
 				style={getElementStyle(element)}
 				in:scale={{ duration: 300, start: 0.8 }}
 				out:fly={{ duration: 300, y: 50, opacity: 0 }}
@@ -159,8 +172,11 @@
 				<div class="progress-container">
 					<div
 						class="progress-bar"
-						class:expiring={element.isExpiring}
-						style="width: var(--progress)"
+						class:expiring={element.isExpiring || element.progress < 20}
+						style="
+							width: calc(var(--progress) * 1%);
+							background-color: {getProgressColor(element.progress, element.isGolden)};
+						"
 					></div>
 				</div>
 
@@ -267,17 +283,41 @@
 		border-radius: 2px;
 		overflow: hidden;
 		margin-top: 4px;
+		position: relative;
 	}
 
 	.progress-bar {
 		height: 100%;
-		background: #4caf50;
-		transition: width 0.1s linear;
 		border-radius: 2px;
+		transition:
+			width 0.1s linear,
+			background-color 0.3s ease;
+		position: relative;
+		overflow: hidden;
+	}
+
+	/* Progress bar shimmer effect */
+	.progress-bar::after {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: -100%;
+		width: 100%;
+		height: 100%;
+		background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+		animation: shimmer 2s ease-in-out infinite;
+	}
+
+	@keyframes shimmer {
+		0% {
+			left: -100%;
+		}
+		100% {
+			left: 100%;
+		}
 	}
 
 	.progress-bar.expiring {
-		background: #ff4444;
 		animation: pulse-warning 0.6s ease-in-out infinite;
 	}
 
@@ -319,6 +359,10 @@
 		text-shadow: 0 0 4px rgba(255, 215, 0, 0.5);
 	}
 
+	.equation-element.golden .progress-container {
+		background: rgba(255, 215, 0, 0.1);
+	}
+
 	/* State Effects */
 	.equation-element.correct {
 		background: rgba(76, 175, 80, 0.3);
@@ -335,21 +379,8 @@
 	}
 
 	.equation-element.expiring {
-		animation: shake 0.5s ease-in-out infinite;
 		border-color: #ff4444;
-	}
-
-	@keyframes shake {
-		0%,
-		100% {
-			transform: translateX(0);
-		}
-		25% {
-			transform: translateX(-2px);
-		}
-		75% {
-			transform: translateX(2px);
-		}
+		box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
 	}
 
 	/* Success/Miss Effects */
@@ -381,12 +412,24 @@
 			border-width: 3px;
 			font-weight: 900;
 		}
+
+		.progress-container {
+			border: 1px solid #fff;
+		}
 	}
 
 	/* Reduced Motion */
 	@media (prefers-reduced-motion: reduce) {
 		.equation-element {
 			transition: none;
+		}
+
+		.progress-bar {
+			transition: width 0.1s linear;
+		}
+
+		.progress-bar::after {
+			display: none;
 		}
 
 		.progress-bar.expiring,

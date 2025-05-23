@@ -106,7 +106,6 @@
 		try {
 			gameFieldReady = true;
 			updateFieldDimensions(fieldInfo);
-			console.log('Game field ready:', fieldInfo);
 		} catch (error) {
 			console.error('Error handling field ready:', error);
 		}
@@ -115,8 +114,6 @@
 	// Game control handlers
 	function handleStartGame() {
 		try {
-			console.log('Starting game with difficulty:', $cache.diff);
-
 			if ($cache.diff === 'Null') {
 				console.error('No difficulty selected');
 				return false;
@@ -124,12 +121,10 @@
 
 			// Initialize game configuration
 			const config = initializeGame($cache.diff, $cache.customConfig);
-			console.log('Game initialized with config:', config);
 
 			// Start the game
 			const started = startGame();
 			if (started) {
-				console.log('Game started successfully');
 				return true;
 			} else {
 				console.error('Failed to start game');
@@ -143,7 +138,6 @@
 
 	function handlePauseGame() {
 		try {
-			console.log('Pausing game');
 			pauseGame();
 			return true;
 		} catch (error) {
@@ -154,7 +148,6 @@
 
 	function handleResumeGame() {
 		try {
-			console.log('Resuming game');
 			resumeGame();
 			return true;
 		} catch (error) {
@@ -165,7 +158,6 @@
 
 	function handleQuitGame() {
 		try {
-			console.log('Quitting game');
 			quitGame();
 
 			// Reset input state
@@ -179,14 +171,7 @@
 
 	function handleProcessInput(input) {
 		try {
-			console.log('Processing input:', input);
 			const processed = processInput(input);
-
-			if (processed) {
-				console.log('Input processed successfully');
-			} else {
-				console.log('Input processing failed or no match found');
-			}
 
 			return processed;
 		} catch (error) {
@@ -210,23 +195,9 @@
 		}
 	}
 
-	// Debug logging for state changes
-	$: if ($gameState) {
-		console.log('Game state updated:', {
-			isActive: $gameState.isActive,
-			isPaused: $gameState.isPaused,
-			isGameOver: $gameState.isGameOver,
-			elements: $gameState.elements.length,
-			score: $gameState.score,
-			health: $gameState.health,
-			difficulty: $cache.diff
-		});
-	}
-
 	// Debug: Log input state machine changes in development
 	$: if (typeof window !== 'undefined' && window.__inputStateMachine) {
 		const debugInfo = inputStateMachine.getDebugInfo();
-		console.log('Input state machine debug:', debugInfo);
 	}
 </script>
 

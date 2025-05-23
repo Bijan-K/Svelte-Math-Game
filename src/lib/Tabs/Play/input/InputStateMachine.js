@@ -50,7 +50,6 @@ export class InputStateMachine {
 		}
 
 		if (this.mode !== newMode) {
-			console.log(`Input mode changed: ${this.mode} -> ${newMode} (by ${source})`);
 			
 			this.mode = newMode;
 			this.activeInput = '';

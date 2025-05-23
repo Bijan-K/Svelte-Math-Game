@@ -28,7 +28,7 @@ export const gameState = writable({
 // Unified timer management to prevent race conditions
 class GameTimerManager {
 	constructor() {
-		this.elementTimers = new Map(); // elementId -> { timeoutId, originalLifetime, pausedAt }
+		this.elementTimers = new Map(); // elementId -> { timeoutId, progressIntervalId, originalLifetime, pausedAt }
 		this.spawnTimer = null;
 		this.gameState = null;
 		this.unsubscribe = null;
@@ -56,6 +56,30 @@ class GameTimerManager {
 			this.clearElementTimer(element.id);
 		}
 
+		const startTime = Date.now();
+		const lifetime = element.lifetime;
+
+		// Update progress every 100ms
+		const progressIntervalId = setInterval(() => {
+			const currentState = get(this.gameState);
+			if (!currentState.isActive || currentState.isPaused) {
+				return;
+			}
+
+			const elapsed = Date.now() - startTime;
+			const progress = Math.max(0, 100 - (elapsed / lifetime) * 100);
+
+			// Update element progress
+			gameState.update(s => ({
+				...s,
+				elements: s.elements.map(el => 
+					el.id === element.id 
+						? { ...el, progress, isExpiring: progress < 20 }
+						: el
+				)
+			}));
+		}, 100);
+
 		const timeoutId = setTimeout(() => {
 			// Double-check state at execution time to prevent race conditions
 			const currentState = get(this.gameState);
@@ -63,12 +87,14 @@ class GameTimerManager {
 				return; // Game state changed, don't expire
 			}
 
+			clearInterval(progressIntervalId);
 			this.elementTimers.delete(element.id);
 			onExpire(element);
 		}, element.lifetime);
 
 		this.elementTimers.set(element.id, {
 			timeoutId,
+			progressIntervalId,
 			originalLifetime: element.lifetime,
 			startTime: Date.now(),
 			pausedAt: null
@@ -94,6 +120,7 @@ class GameTimerManager {
 		// Pause element timers
 		for (const [elementId, timer] of this.elementTimers.entries()) {
 			clearTimeout(timer.timeoutId);
+			clearInterval(timer.progressIntervalId);
 			timer.pausedAt = pauseTime;
 		}
 
@@ -115,10 +142,41 @@ class GameTimerManager {
 					// Find the element and reschedule
 					const element = state.elements.find(el => el.id === elementId);
 					if (element) {
-						this.scheduleElementExpiration(
-							{ ...element, lifetime: remainingTime },
-							this.onElementExpire
-						);
+						// Update timer start time to account for pause
+						timer.startTime = resumeTime - elapsed;
+						timer.pausedAt = null;
+
+						// Restart progress interval
+						timer.progressIntervalId = setInterval(() => {
+							const currentState = get(this.gameState);
+							if (!currentState.isActive || currentState.isPaused) {
+								return;
+							}
+
+							const newElapsed = Date.now() - timer.startTime;
+							const progress = Math.max(0, 100 - (newElapsed / timer.originalLifetime) * 100);
+
+							gameState.update(s => ({
+								...s,
+								elements: s.elements.map(el => 
+									el.id === elementId 
+										? { ...el, progress, isExpiring: progress < 20 }
+										: el
+								)
+							}));
+						}, 100);
+
+						// Reschedule timeout
+						timer.timeoutId = setTimeout(() => {
+							const currentState = get(this.gameState);
+							if (!currentState.isActive || currentState.isPaused) {
+								return;
+							}
+
+							clearInterval(timer.progressIntervalId);
+							this.elementTimers.delete(elementId);
+							this.onElementExpire(element);
+						}, remainingTime);
 					}
 				}
 			}
@@ -134,6 +192,7 @@ class GameTimerManager {
 		const timer = this.elementTimers.get(elementId);
 		if (timer) {
 			clearTimeout(timer.timeoutId);
+			clearInterval(timer.progressIntervalId);
 			this.elementTimers.delete(elementId);
 		}
 	}
@@ -149,6 +208,7 @@ class GameTimerManager {
 		// Clear all element timers
 		for (const timer of this.elementTimers.values()) {
 			clearTimeout(timer.timeoutId);
+			clearInterval(timer.progressIntervalId);
 		}
 		this.elementTimers.clear();
 

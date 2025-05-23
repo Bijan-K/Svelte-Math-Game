@@ -3,6 +3,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import ViewportManager from './ViewportManager.svelte';
 	import { viewport } from './viewportStore.js';
+	import { cache } from '$lib/stores.js';
 
 	// Props
 	export let showAside = false;
@@ -13,6 +14,9 @@
 
 	// Reactive layout updates
 	$: currentLayout = $viewport.isMobile ? 'mobile' : 'desktop';
+
+	// Only show control panel when a difficulty is selected
+	$: showControlPanel = $cache.diff !== 'Null';
 
 	// Handle viewport changes
 	function handleViewportChange(viewportState) {
@@ -37,6 +41,7 @@
 	class="game-layout {currentLayout}"
 	class:with-aside={showAside}
 	class:keyboard-open={$viewport.isKeyboardOpen}
+	class:no-controls={!showControlPanel}
 >
 	<!-- Main Game Container -->
 	<main class="layout-main">
@@ -46,9 +51,11 @@
 		</section>
 
 		<!-- Control Panel - unified bottom area -->
-		<section class="layout-control-panel">
-			<slot name="control-panel" />
-		</section>
+		{#if showControlPanel}
+			<section class="layout-control-panel">
+				<slot name="control-panel" />
+			</section>
+		{/if}
 	</main>
 
 	<!-- Mobile Aside Overlay -->
@@ -106,6 +113,12 @@
 		overflow: hidden;
 		background: #000;
 		min-height: 0; /* Important for flexbox */
+		transition: all 0.3s ease;
+	}
+
+	/* When no controls, game field takes full height */
+	.game-layout.no-controls .layout-game-field {
+		height: 100%;
 	}
 
 	/* Control Panel - Bottom area with score/controls */
@@ -121,6 +134,19 @@
 		z-index: 20;
 		overflow: hidden;
 		padding-top: 0.5rem;
+		/* Add entrance animation */
+		animation: slideUp 0.3s ease-out;
+	}
+
+	@keyframes slideUp {
+		from {
+			transform: translateY(100%);
+			opacity: 0;
+		}
+		to {
+			transform: translateY(0);
+			opacity: 1;
+		}
 	}
 
 	/* Mobile Aside Overlay */
@@ -157,6 +183,11 @@
 		pointer-events: auto;
 	}
 
+	/* Mobile adjustments for overlay */
+	.game-layout.mobile .layout-overlay {
+		width: 100vw;
+	}
+
 	/* Keyboard Adjustments */
 	.game-layout.keyboard-open.mobile {
 		height: var(--dynamic-height, 100vh);
@@ -183,7 +214,8 @@
 
 	/* Animation & Transitions */
 	.layout-main,
-	.layout-control-panel {
+	.layout-control-panel,
+	.layout-game-field {
 		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	}
 
@@ -191,8 +223,13 @@
 	@media (prefers-reduced-motion: reduce) {
 		.layout-main,
 		.layout-control-panel,
-		.layout-mobile-aside {
+		.layout-mobile-aside,
+		.layout-game-field {
 			transition: none;
+		}
+
+		.layout-control-panel {
+			animation: none;
 		}
 	}
 

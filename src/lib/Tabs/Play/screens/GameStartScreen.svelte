@@ -128,9 +128,6 @@
 			navigator.vibrate(50);
 		}
 		selectDifficulty(diffId);
-
-		console.log(diffId);
-		console.log($cache.diff);
 	}
 </script>
 

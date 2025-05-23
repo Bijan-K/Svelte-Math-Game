@@ -1,10 +1,12 @@
 <!-- src/lib/tabs/play/input/MobileNumpad.svelte -->
 <script>
 	import { onMount, onDestroy } from 'svelte';
-	import { cache } from '$lib/stores.js';
+	import { cache, mobileMenuState } from '$lib/stores.js';
 	import { viewport } from '../layout/viewportStore.js';
 	import { fade, slide } from 'svelte/transition';
 	import { inputStateMachine } from './InputStateMachine.js';
+	import { score, health, maxHealth } from '$lib/stores/gameStore.js';
+	import SettingIcon from '$lib/Icons/SettingIcon.svelte';
 
 	export let onRequestKeyboard = () => {};
 	export let useDeviceKeyboard = false;
@@ -16,6 +18,10 @@
 	// Device input element reference
 	let inputElement;
 
+	// Store subscriptions
+	let healthUnsubscribe;
+	let scoreUnsubscribe;
+
 	// Get difficulty-based theming
 	$: difficultyTheme = getDifficultyTheme($cache.diff);
 
@@ -26,7 +32,30 @@
 	$: isNumpadMode = inputState.mode === 'mobile-numpad';
 	$: isKeyboardMode = inputState.mode === 'mobile-keyboard';
 
-	// Numpad layout - traditional phone style with an Enter button
+	// Get current health and score
+	$: currentHealth = $health;
+	$: currentMaxHealth = $maxHealth;
+	$: currentScore = $score;
+	$: healthPercentage = currentMaxHealth > 0 ? (currentHealth / currentMaxHealth) * 100 : 0;
+
+	// Generate HP segments reactively
+	$: hpSegments = (() => {
+		const segments = [];
+		for (let i = 0; i < currentMaxHealth; i++) {
+			const isActive = i < currentHealth;
+			segments.push({
+				active: isActive,
+				percentage: 100 / currentMaxHealth,
+				index: i
+			});
+		}
+		return segments;
+	})();
+
+	// Force update when health changes
+	$: healthKey = `${currentHealth}-${currentMaxHealth}`;
+
+	// Numpad layout - traditional phone style with Enter and Menu buttons
 	const numpadLayout = [
 		[
 			{ value: '1', label: '1', type: 'number' },
@@ -47,11 +76,8 @@
 			{ value: '-', label: '±', type: 'special', title: 'Negative sign' },
 			{ value: '0', label: '0', type: 'number' },
 			{ value: 'backspace', label: '⌫', type: 'special', title: 'Delete' }
-		],
-		[
-			// New row for the Enter button
-			{ value: 'enter', label: 'ENTER', type: 'action', title: 'Submit Answer' }
 		]
+		// Enter and Menu buttons will be handled separately for custom layout
 	];
 
 	onMount(() => {
@@ -146,6 +172,20 @@
 		}
 	}
 
+	function toggleAside() {
+		// Toggle mobile menu state
+		mobileMenuState.update((n) => !n);
+		// Apply the slide class to move game content
+		const primeContainer = document.querySelector('.prime-container');
+		if (primeContainer) {
+			primeContainer.classList.toggle('mobile-slide');
+		}
+		// Haptic feedback
+		if ('vibrate' in navigator) {
+			navigator.vibrate(20);
+		}
+	}
+
 	// Handle device keyboard input
 	function handleDeviceInput(event) {
 		if (!isKeyboardMode || !$cache.gameState) return;
@@ -208,14 +248,19 @@
 		{#if isNumpadMode}
 			<!-- Custom Numpad Mode -->
 			<div class="numpad" role="group" aria-label="Number input pad">
-				<!-- Input Display -->
+				<!-- Input Display with Score -->
 				<div
 					class="input-display"
 					aria-live="polite"
 					aria-label="Current input: {inputState.input || 'none'}"
 				>
-					<div class="input-value" class:processing={inputState.isProcessing}>
-						{inputState.input || '0'}
+					<div class="display-content">
+						<div class="score-display">
+							SCORE: <span class="score-value">{currentScore}</span>
+						</div>
+						<div class="input-value" class:processing={inputState.isProcessing}>
+							{inputState.input || '0'}
+						</div>
 					</div>
 					<div class="input-actions">
 						<button
@@ -242,20 +287,54 @@
 								<button
 									class="numpad-button"
 									class:special={button.type === 'special'}
-									class:enter-button={button.type === 'action'}
-									class:can-process={button.type === 'action' && inputState.canProcess}
 									on:click={() => handleInput(button.value)}
 									aria-label={button.title || `${button.type} ${button.label}`}
 									title={button.title}
-									disabled={!$cache.gameState ||
-										inputState.isProcessing ||
-										(button.type === 'action' && !inputState.canProcess)}
+									disabled={!$cache.gameState || inputState.isProcessing}
 								>
 									{button.label}
 								</button>
 							{/each}
 						</div>
 					{/each}
+
+					<!-- Bottom row with Enter and Menu buttons -->
+					<div class="numpad-row bottom-row">
+						<button
+							class="numpad-button menu-button"
+							on:click={toggleAside}
+							aria-label="Toggle menu"
+							title="Menu"
+						>
+							<SettingIcon />
+						</button>
+						<button
+							class="numpad-button enter-button"
+							class:can-process={inputState.canProcess}
+							on:click={() => handleInput('enter')}
+							aria-label="Submit Answer"
+							title="Submit Answer"
+							disabled={!$cache.gameState || inputState.isProcessing || !inputState.canProcess}
+							style="--health-percentage: {healthPercentage}%"
+							data-health-key={healthKey}
+						>
+							<div class="enter-content">
+								<span class="enter-text">ENTER</span>
+								<!-- HP segments background -->
+								{#key healthKey}
+									<div class="hp-segments">
+										{#each hpSegments as segment (segment.index)}
+											<div
+												class="hp-segment"
+												class:active={segment.active}
+												style="width: {segment.percentage}%"
+											></div>
+										{/each}
+									</div>
+								{/key}
+							</div>
+						</button>
+					</div>
 				</div>
 			</div>
 		{:else if isKeyboardMode}
@@ -263,6 +342,10 @@
 			<div class="device-keyboard-mode" in:fade={{ duration: 200 }}>
 				<div class="keyboard-info">
 					<span class="mode-label">Device Keyboard</span>
+					<div class="keyboard-stats">
+						<span class="score-display">SCORE: {currentScore}</span>
+						<span class="health-display">HP: {currentHealth}/{currentMaxHealth}</span>
+					</div>
 					<button
 						class="keyboard-toggle device"
 						on:click={() => handleInput('keyboard')}
@@ -300,17 +383,6 @@
 				{/if}
 			</div>
 		{/if}
-
-		<!-- State indicator for debugging -->
-		{#if true}
-			<div class="state-indicator">
-				<div>Mode: {inputState.mode}</div>
-				<div>Input: "{inputState.input}"</div>
-				<div>Source: {inputState.inputSource || 'none'}</div>
-				<div>Processing: {inputState.isProcessing ? 'Yes' : 'No'}</div>
-				<div>Can Process: {inputState.canProcess ? 'Yes' : 'No'}</div>
-			</div>
-		{/if}
 	</div>
 {/if}
 
@@ -324,12 +396,12 @@
 		background: rgba(0, 0, 0, 0.95);
 		backdrop-filter: blur(10px);
 		border-top: 2px solid var(--primary-color);
-		max-height: 55vh; /* Adjusted slightly for new row */
+		max-height: 55vh;
 		overflow: hidden;
 	}
 
 	.numpad-container.device-mode {
-		max-height: 20vh;
+		max-height: 25vh;
 	}
 
 	.numpad {
@@ -340,14 +412,15 @@
 
 	.input-display {
 		display: flex;
-		align-items: center;
+		align-items: stretch;
 		justify-content: space-between;
 		background: rgba(255, 255, 255, 0.05);
 		border: 2px solid var(--primary-color);
 		border-radius: 12px;
-		padding: clamp(0.75rem, 3vw, 1rem);
+		padding: clamp(0.5rem, 2vw, 0.75rem);
 		margin-bottom: clamp(0.5rem, 2vw, 1rem);
 		transition: all 0.3s ease;
+		min-height: 48px;
 	}
 
 	.input-display:has(.processing) {
@@ -355,15 +428,34 @@
 		background: rgba(255, 255, 255, 0.02);
 	}
 
+	.display-content {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		gap: 0.25rem;
+	}
+
+	.score-display {
+		font-size: clamp(0.7rem, 2vw, 0.8rem);
+		color: var(--accent-color);
+		font-weight: 600;
+		letter-spacing: 0.05em;
+		font-family: 'Courier New', monospace;
+	}
+
+	.score-value {
+		color: #fff;
+		font-weight: 700;
+	}
+
 	.input-value {
-		font-size: clamp(1.2rem, 4vw, 1.8rem);
+		font-size: clamp(1.2rem, 4vw, 1.6rem);
 		font-weight: 600;
 		color: #fff;
 		font-family: 'Courier New', monospace;
-		min-height: 1.5rem;
-		flex: 1;
-		text-align: left;
 		transition: all 0.3s ease;
+		line-height: 1;
 	}
 
 	.input-value.processing {
@@ -373,6 +465,7 @@
 
 	.input-actions {
 		display: flex;
+		align-items: center;
 		gap: 0.5rem;
 	}
 
@@ -416,9 +509,14 @@
 		gap: clamp(0.5rem, 2vw, 0.75rem);
 	}
 
+	.bottom-row {
+		display: flex;
+		gap: clamp(0.5rem, 2vw, 0.75rem);
+	}
+
 	.numpad-button {
 		flex: 1;
-		height: clamp(48px, 10vw, 55px); /* Adjusted for potentially more rows */
+		height: clamp(45px, 9vw, 52px);
 		border: 2px solid var(--primary-color);
 		background: rgba(255, 255, 255, 0.05);
 		color: #fff;
@@ -435,6 +533,13 @@
 		overflow: hidden;
 	}
 
+	.game-field.mobile .equation-element {
+		width: 100px;
+		height: 70px;
+		padding: 6px;
+		border-radius: 6px;
+	}
+
 	.numpad-button::before {
 		content: '';
 		position: absolute;
@@ -445,6 +550,7 @@
 		background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
 		transition: left 0.5s ease;
 		opacity: 0.3;
+		z-index: 1;
 	}
 
 	.numpad-button:active:not(:disabled)::before {
@@ -472,42 +578,104 @@
 		background: var(--primary-color);
 	}
 
+	/* Enter Button with HP Bar */
 	.enter-button {
-		/* Styles for the Enter button */
-		background: var(--primary-color);
+		flex: 3;
+		background: rgba(255, 255, 255, 0.08);
 		border-color: var(--primary-color);
+		position: relative;
+		overflow: hidden;
+		padding: 0;
+	}
+
+	.enter-content {
+		position: relative;
+		width: 100%;
+		height: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 2;
+	}
+
+	.enter-text {
 		font-size: clamp(0.9rem, 3vw, 1.2rem);
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 1px;
+		color: #fff;
+		z-index: 3;
+		position: relative;
+		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+	}
+
+	.hp-segments {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		display: flex;
+		z-index: 1;
+	}
+
+	.hp-segment {
+		height: 100%;
+		border-right: 1px solid rgba(0, 0, 0, 0.3);
+		background: rgba(255, 255, 255, 0.02);
 		transition: all 0.3s ease;
 	}
 
+	.hp-segment:last-child {
+		border-right: none;
+	}
+
+	.hp-segment.active {
+		background: linear-gradient(to top, var(--primary-color), var(--accent-color));
+		box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.2);
+		animation: hpPulse 0.3s ease-out;
+	}
+
+	@keyframes hpPulse {
+		0% {
+			opacity: 0.5;
+		}
+		100% {
+			opacity: 1;
+		}
+	}
+
 	.enter-button.can-process {
-		/* When Enter button can be pressed */
-		background: var(--accent-color);
 		border-color: var(--accent-color);
 		box-shadow: 0 0 10px var(--accent-color);
 	}
 
 	.enter-button:active:not(:disabled) {
-		background: var(--accent-color); /* Keep accent on active */
-		border-color: var(--accent-color);
 		transform: scale(0.95);
 	}
 
-	/* General disabled style for enter button will be inherited from .numpad-button:disabled */
-	/* Override if specific disabled style for enter button is needed */
 	.enter-button:disabled {
-		opacity: 0.4; /* Slightly different opacity if needed */
-		background: rgba(100, 100, 100, 0.2); /* Darker disabled background */
+		opacity: 0.4;
 		border-color: rgba(120, 120, 120, 0.3);
-		color: rgba(255, 255, 255, 0.3);
 	}
-	.enter-button.can-process:disabled {
-		/* This case should ideally not happen if logic is correct */
-		background: var(--primary-color); /* Revert if can-process but disabled by other means */
-		border-color: var(--primary-color);
+
+	/* Menu Button */
+	.menu-button {
+		flex: 1;
+		background: rgba(255, 255, 255, 0.1);
+		border-color: rgba(255, 255, 255, 0.3);
+		font-size: 1.5rem;
+		max-width: 60px;
+	}
+
+	.menu-button:hover:not(:disabled) {
+		background: rgba(255, 255, 255, 0.2);
+		border-color: rgba(255, 255, 255, 0.5);
+	}
+
+	.menu-button:active:not(:disabled) {
+		background: rgba(255, 255, 255, 0.3);
+		transform: scale(0.95);
 	}
 
 	/* Device Keyboard Mode */
@@ -523,12 +691,27 @@
 		align-items: center;
 		justify-content: space-between;
 		margin-bottom: clamp(0.75rem, 3vw, 1rem);
+		gap: 0.5rem;
+		flex-wrap: wrap;
 	}
 
 	.mode-label {
 		color: #ccc;
 		font-size: clamp(0.85rem, 3vw, 1rem);
 		font-weight: 500;
+	}
+
+	.keyboard-stats {
+		display: flex;
+		gap: 1rem;
+		font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+		font-family: 'Courier New', monospace;
+		color: var(--accent-color);
+		font-weight: 600;
+	}
+
+	.health-display {
+		color: var(--primary-color);
 	}
 
 	.keyboard-toggle.device {
@@ -586,27 +769,6 @@
 		font-style: italic;
 	}
 
-	/* State indicator for debugging */
-	.state-indicator {
-		position: absolute;
-		top: 5px;
-		right: 5px;
-		background: rgba(0, 0, 0, 0.9);
-		color: #0f0;
-		padding: 0.25rem;
-		border-radius: 3px;
-		font-family: monospace;
-		font-size: 0.7rem;
-		z-index: 100;
-		pointer-events: none;
-		border: 1px solid #333;
-	}
-
-	.state-indicator div {
-		margin-bottom: 0.1rem;
-		white-space: nowrap;
-	}
-
 	/* Remove spinner arrows */
 	.device-input::-webkit-outer-spin-button,
 	.device-input::-webkit-inner-spin-button {
@@ -615,25 +777,25 @@
 	}
 
 	.device-input[type='number'] {
-		--moz-appearance: textfield;
+		-moz-appearance: textfield;
 	}
 
 	/* Responsive Adjustments */
 	@media (max-height: 700px) {
-		/* Adjusted for potentially taller numpad */
 		.numpad-button {
-			height: clamp(40px, 8vw, 50px);
+			height: clamp(40px, 8vw, 48px);
 		}
 		.numpad-container {
 			max-height: 50vh;
 		}
 	}
+
 	@media (max-height: 600px) {
 		.numpad-button {
 			height: clamp(38px, 7vw, 45px);
 		}
 		.numpad-container {
-			max-height: 55vh; /* Allow more height if screen is short */
+			max-height: 55vh;
 		}
 		.numpad-grid {
 			gap: clamp(0.25rem, 1.5vw, 0.5rem);
@@ -650,7 +812,11 @@
 		}
 
 		.input-display {
-			padding: 0.75rem;
+			padding: 0.5rem;
+		}
+
+		.menu-button {
+			max-width: 50px;
 		}
 	}
 
@@ -670,6 +836,10 @@
 			border-color: #fff;
 			background: #000;
 		}
+
+		.hp-segment {
+			border-right-color: #fff;
+		}
 	}
 
 	/* Reduced Motion */
@@ -678,8 +848,8 @@
 		.keyboard-toggle,
 		.device-input,
 		.input-value,
-		.enter-button {
-			/* Added enter-button */
+		.enter-button,
+		.hp-segment {
 			transition: none;
 		}
 
