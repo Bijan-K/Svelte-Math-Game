@@ -1,7 +1,7 @@
 <!-- src/routes/+page.svelte -->
 <script>
 	import Aside from '$lib/Aside/Aside.svelte';
-	import PlayModeContainer from '$lib/Tabs/Play/PlayModeContainer.svelte';
+	import PlayContainer from '$lib/tabs/play/PlayContainer.svelte';
 	import StatsContainer from '$lib/Tabs/Stats/StatsContainer.svelte';
 	import AboutContainer from '$lib/Tabs/About/AboutContainer.svelte';
 
@@ -28,7 +28,7 @@
 <!-- Play -->
 <div class="prime-container">
 	{#if $modeState == 'play'}
-		<PlayModeContainer />
+		<PlayContainer />
 	{:else if $modeState == 'stats'}
 		<StatsContainer />
 	{:else if $modeState == 'about'}

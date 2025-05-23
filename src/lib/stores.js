@@ -39,7 +39,7 @@ export let record = writable([
 ]);
 export let missed_eq_list = writable([]);
 
-// Basically RAM
+// Current State
 export let cache = writable({
 	diff: 'Null',
 	hp: 0,
