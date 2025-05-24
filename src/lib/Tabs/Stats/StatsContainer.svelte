@@ -237,7 +237,7 @@
 		left: 1.5rem;
 		width: 56px;
 		height: 56px;
-		border-radius: 50%;
+		border-radius: 2px;
 		border: 2px solid #555;
 		background: #000;
 		color: white;

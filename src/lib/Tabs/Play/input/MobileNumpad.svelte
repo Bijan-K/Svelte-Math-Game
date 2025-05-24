@@ -5,7 +5,7 @@
 	import { viewport } from '../layout/viewportStore.js';
 	import { fade, slide } from 'svelte/transition';
 	import { inputStateMachine } from './InputStateMachine.js';
-	import { score, health, maxHealth } from '$lib/stores/gameStore.js';
+	import { score, health, maxHealth, pauseGame } from '$lib/stores/gameStore.js';
 	import SettingIcon from '$lib/Icons/SettingIcon.svelte';
 
 	export let onRequestKeyboard = () => {};
@@ -173,6 +173,11 @@
 	}
 
 	function toggleAside() {
+		// Pause the game when opening menu
+		if (!$mobileMenuState && $cache.gameState) {
+			pauseGame();
+		}
+
 		// Toggle mobile menu state
 		mobileMenuState.update((n) => !n);
 		// Apply the slide class to move game content

@@ -2,6 +2,9 @@
 <script>
 	import { fade, scale, fly } from 'svelte/transition';
 	import { cache } from '$lib/stores.js';
+	import { mobileMenuState, isMobile } from '$lib/stores.js';
+	import SettingIcon from '$lib/Icons/SettingIcon.svelte';
+
 	import { viewport } from '../layout/viewportStore.js';
 	import CustomDifficultyPanel from './CustomDifficultyPanel.svelte';
 
@@ -45,6 +48,11 @@
 			icon: '🔴'
 		}
 	];
+
+	function changeStatus() {
+		document.querySelector('.prime-container').classList.toggle('mobile-slide');
+		mobileMenuState.update((n) => !n);
+	}
 
 	function selectDifficulty(diffId) {
 		selectedDifficulty = diffId;
@@ -261,6 +269,12 @@
 	{/if}
 </div>
 
+{#if $isMobile && !$mobileMenuState}
+	<button class="mobile-menu-btn" on:click={changeStatus} aria-label="Open menu">
+		<SettingIcon />
+	</button>
+{/if}
+
 <style>
 	.start-screen {
 		position: relative;
@@ -283,7 +297,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: clamp(1.5rem, 4vw, 2.5rem);
-		height: 100dvh;
+		height: 100%;
 	}
 
 	/* Header */
@@ -502,9 +516,44 @@
 		color: #666;
 		font-size: clamp(0.8rem, 2.5vw, 0.9rem);
 		font-style: italic;
+		padding-bottom: 2rem;
 	}
 
 	/* Mobile Adjustments */
+	.mobile-menu-btn {
+		position: fixed;
+		bottom: 2rem;
+		left: 1.5rem;
+		width: 56px;
+		height: 56px;
+		border-radius: 2px;
+		border: 2px solid #555;
+		background: #000;
+		color: white;
+		font-size: 1.5rem;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		z-index: 21;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.mobile-menu-btn:hover {
+		transform: scale(1.1);
+		background: #333;
+		border-color: #777;
+	}
+
+	.mobile-menu-btn:active {
+		transform: scale(0.95);
+	}
+
+	.start-screen.mobile {
+		padding: 2rem 1rem;
+	}
+
 	.start-screen.mobile .difficulty-grid {
 		grid-template-columns: 1fr;
 		gap: clamp(0.75rem, 3vw, 1rem);

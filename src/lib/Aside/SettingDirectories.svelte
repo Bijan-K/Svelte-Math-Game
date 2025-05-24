@@ -3,7 +3,7 @@
 	import ArrowIcon from '../Icons/ArrowIcon.svelte';
 
 	import { slide } from 'svelte/transition';
-	import { mobileMenuState, menuListIsClosed } from '$lib/stores.js';
+	import { mobileMenuState, menuListIsClosed, isMobile } from '$lib/stores.js';
 	import { modeState } from '$lib/stores.js';
 
 	let isHovered = {
@@ -20,12 +20,15 @@
 
 		document.querySelector(`.${mode}-dir`).classList.add('underline');
 
-		if (mode !== 'play') {
-			document.querySelector('.prime-container').classList.toggle('mobile-slide');
-			mobileMenuState.update((n) => !n);
-			menuListIsClosed.update((n) => true);
-			document.querySelector('.menu').classList.toggle('spin');
+		// Close menu on mobile for all modes including Play
+		if ($isMobile && $mobileMenuState) {
+			document.querySelector('.prime-container').classList.remove('mobile-slide');
+			mobileMenuState.update((n) => false);
 		}
+
+		// Close the directories menu
+		menuListIsClosed.update((n) => true);
+		document.querySelector('.menu').classList.toggle('spin');
 	}
 
 	function handleHover(parentId) {
