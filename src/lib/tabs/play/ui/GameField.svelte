@@ -25,9 +25,12 @@
 		const rect = fieldContainer.getBoundingClientRect();
 		if (rect.width === 0 || rect.height === 0) return; // Skip invalid dimensions
 
+		// Use 45vh on mobile (numpad takes 55vh), full height on desktop
+		const effectiveHeight = $viewport.isMobile ? window.innerHeight * 0.45 : rect.height;
+
 		fieldDimensions = {
 			width: rect.width,
-			height: rect.height
+			height: effectiveHeight
 		};
 
 		// Calculate safe spawn area (keep elements fully within bounds)
@@ -36,7 +39,7 @@
 
 		safeSpawnArea = {
 			width: Math.max(0, fieldDimensions.width - ELEMENT_WIDTH - marginX * 2),
-			height: Math.max(0, fieldDimensions.height - ELEMENT_HEIGHT - marginY * 2),
+			height: Math.max(0, effectiveHeight - ELEMENT_HEIGHT - marginY * 2),
 			offsetX: marginX,
 			offsetY: marginY
 		};
@@ -45,7 +48,7 @@
 		if (safeSpawnArea.width > 0 && safeSpawnArea.height > 0) {
 			onFieldReady({
 				containerWidth: fieldDimensions.width,
-				containerHeight: fieldDimensions.height,
+				containerHeight: effectiveHeight,
 				safeArea: safeSpawnArea
 			});
 		}
