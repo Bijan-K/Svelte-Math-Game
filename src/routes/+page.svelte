@@ -1,9 +1,9 @@
 <!-- src/routes/+page.svelte -->
 <script>
-	import Aside from '$lib/Aside/Aside.svelte';
-	import PlayContainer from '$lib/Tabs/Play/PlayContainer.svelte';
-	import StatsContainer from '$lib/Tabs/Stats/StatsContainer.svelte';
-	import AboutContainer from '$lib/Tabs/About/AboutContainer.svelte';
+	import Aside from '$lib/aside/Aside.svelte';
+	import PlayContainer from '$lib/tabs/play/PlayContainer.svelte';
+	import StatsContainer from '$lib/tabs/stats/StatsContainer.svelte';
+	import AboutContainer from '$lib/tabs/about/AboutContainer.svelte';
 
 	import { modeState, isMobile } from '$lib/stores.js';
 	import { onMount } from 'svelte';
