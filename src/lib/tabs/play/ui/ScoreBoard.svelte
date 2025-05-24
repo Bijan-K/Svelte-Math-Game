@@ -203,7 +203,6 @@
 		width: 100%;
 		height: 100%;
 		background: rgba(0, 0, 0, 0.95);
-		border-top: 2px solid var(--primary-color);
 		display: flex;
 		align-items: center;
 		padding: 1rem;
@@ -211,6 +210,7 @@
 		backdrop-filter: blur(10px);
 		overflow: hidden;
 		position: relative;
+		padding-top: 1.5rem;
 	}
 
 	.scoreboard-content {

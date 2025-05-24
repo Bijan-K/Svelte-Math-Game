@@ -125,7 +125,6 @@
 	.layout-control-panel {
 		flex-shrink: 0;
 		background: rgba(0, 0, 0, 0.95);
-		border-top: 1px solid #333;
 		height: clamp(80px, 12vh, 120px);
 		display: flex;
 		flex-direction: column;

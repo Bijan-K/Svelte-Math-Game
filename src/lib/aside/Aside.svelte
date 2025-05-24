@@ -103,7 +103,6 @@
 		left: 0;
 		width: 100vw;
 		height: 100dvh;
-		background: rgba(0, 0, 0, 0.5);
 		z-index: 39;
 		backdrop-filter: blur(2px);
 	}
@@ -113,7 +112,6 @@
 		font-size: 2rem;
 		padding: 0.5rem;
 		color: #fff;
-		border-bottom: 1px solid #333;
 		margin-bottom: 1rem;
 		display: flex;
 		align-items: center;
